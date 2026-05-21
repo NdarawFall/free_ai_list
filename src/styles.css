@@ -6,21 +6,21 @@
 
 @layer base {
   :root {
-    --nexus-midnight: #020617;
-    --nexus-blue: #3b82f6;
-    --nexus-cyan: #22d3ee;
-    --nexus-glass: rgba(255, 255, 255, 0.03);
-    --nexus-border: rgba(255, 255, 255, 0.08);
+    --nexus-bg: #f5f5f7;
+    --nexus-fg: #1d1d1f;
+    --nexus-blue: #0071e3;
+    --nexus-muted: #86868b;
+    --nexus-border: rgba(0, 0, 0, 0.08);
   }
 
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
-    background: var(--nexus-midnight);
+    background: var(--nexus-bg);
   }
 
   body {
-    @apply bg-[#020617] text-slate-200 antialiased overflow-x-hidden;
+    @apply bg-[#f5f5f7] text-[#1d1d1f] antialiased overflow-x-hidden;
     font-family: 'Inter', system-ui, sans-serif;
   }
 }
@@ -31,64 +31,63 @@
     @apply mx-auto max-w-[1400px] px-6 sm:px-12 lg:px-20;
   }
 
-  /* Floating Pill Navbar */
+  /* Floating Pill Navbar (Light Mode) */
   .nexus-nav {
-    @apply fixed top-6 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-8 h-14 px-6 rounded-full border border-white/[0.08] bg-slate-950/40 backdrop-blur-2xl transition-all duration-500;
+    @apply fixed top-6 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 h-14 px-5 rounded-full border border-black/[0.05] bg-white/60 backdrop-blur-3xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-all duration-500 min-w-max;
   }
 
-  /* Background Grain & Orbs */
+  /* Background Grain & Orbs (Light Mode) */
   .nexus-bg {
     @apply fixed inset-0 -z-10 pointer-events-none;
   }
 
   .nexus-bg::after {
     content: "";
-    @apply absolute inset-0 opacity-[0.03];
+    @apply absolute inset-0 opacity-[0.05];
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   }
 
   .glow-nexus {
-    @apply absolute rounded-full blur-[120px] opacity-20;
+    @apply absolute rounded-full blur-[120px] opacity-[0.15];
     animation: drift 20s infinite alternate ease-in-out;
   }
 
   @keyframes drift {
     0% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(10vw, 15vh) scale(1.2); }
-    100% { transform: translate(-5vw, 10vh) scale(0.9); }
+    50% { transform: translate(5vw, 10vh) scale(1.1); }
+    100% { transform: translate(-5vw, 5vh) scale(0.9); }
   }
 
-  /* Cards - Frosted Tile */
+  /* Cards - Frosted Tile (Light Mode) */
   .nexus-card {
-    @apply relative overflow-hidden rounded-[32px] border border-white/[0.06] bg-white/[0.02] p-8 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)];
+    @apply relative overflow-hidden rounded-[32px] border border-black/[0.05] bg-white p-8 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-[0_4px_24px_rgba(0,0,0,0.02)];
   }
 
   .nexus-card:hover {
-    @apply border-white/[0.12] bg-white/[0.04] -translate-y-2;
-    box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.6);
+    @apply border-blue-500/20 -translate-y-2 shadow-[0_32px_64px_rgba(0,0,0,0.06)];
   }
 
   /* Official Google Button */
   .google-btn {
-    @apply flex items-center gap-3 bg-white px-5 h-10 rounded-full text-sm font-bold text-slate-900 transition-all hover:bg-slate-100 hover:shadow-lg active:scale-95;
+    @apply flex items-center gap-3 bg-white px-5 h-10 rounded-full text-sm font-bold text-slate-900 border border-black/5 transition-all hover:bg-slate-50 hover:shadow-lg active:scale-95;
   }
 
   /* Inputs */
   .nexus-search {
-    @apply h-12 w-full rounded-2xl bg-white/[0.04] border border-white/[0.08] px-12 text-sm font-medium text-white outline-none transition-all duration-300 focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5;
+    @apply h-12 w-full rounded-2xl bg-black/[0.03] border border-black/[0.05] px-12 text-sm font-medium text-black outline-none transition-all duration-300 focus:bg-white focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5;
   }
 
   .nexus-pill {
-    @apply px-5 py-2 rounded-full text-[13px] font-semibold text-slate-400 border border-white/[0.05] transition-all duration-300;
+    @apply px-5 py-2 rounded-full text-[13px] font-semibold text-slate-500 border border-black/[0.05] transition-all duration-300;
   }
 
   .nexus-pill.active {
-    @apply bg-white text-black border-white;
+    @apply bg-black text-white border-black;
   }
 
   /* Admin Suite */
   .nexus-dashboard {
-    @apply p-8 sm:p-12 rounded-[40px] border border-white/[0.06] bg-white/[0.02] backdrop-blur-3xl;
+    @apply p-8 sm:p-12 rounded-[40px] border border-black/[0.05] bg-white shadow-xl;
   }
 
   .nexus-input-group {
@@ -96,20 +95,42 @@
   }
 
   .nexus-label {
-    @apply text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 ml-4;
+    @apply text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 ml-4;
   }
 
   .nexus-field {
-    @apply h-12 w-full rounded-xl bg-white/5 border border-white/10 px-4 text-sm text-white outline-none transition-all focus:border-blue-500 focus:bg-white/10;
+    @apply h-12 w-full rounded-xl bg-black/[0.03] border border-black/[0.05] px-4 text-sm text-black outline-none transition-all focus:border-blue-500 focus:bg-white;
   }
 
   /* Typography */
   .nexus-h1 {
-    @apply text-5xl font-extrabold tracking-tight sm:text-7xl lg:text-[90px] leading-[1] text-white;
+    @apply text-5xl font-black tracking-tight sm:text-7xl lg:text-[90px] leading-[1] text-[#1d1d1f];
   }
 
   .nexus-btn-primary {
-    @apply inline-flex h-12 items-center justify-center rounded-full bg-blue-600 px-8 text-sm font-bold text-white transition-all hover:bg-blue-500 hover:scale-[1.03] active:scale-[0.97] shadow-xl shadow-blue-500/20;
+    @apply inline-flex h-12 items-center justify-center rounded-full bg-[#0071e3] px-8 text-sm font-bold text-white transition-all hover:bg-[#0077ed] hover:scale-[1.03] active:scale-[0.97] shadow-xl shadow-blue-500/10;
+  }
+
+  .animate-fade {
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Loading animation styles */
+  .loader-container {
+    @apply fixed inset-0 z-[2000] bg-white flex flex-col items-center justify-center;
+  }
+
+  .loader-bar {
+    @apply w-48 h-[2px] bg-black/5 rounded-full overflow-hidden mt-8;
+  }
+
+  .loader-progress {
+    @apply h-full bg-blue-600 w-0 transition-all duration-300;
   }
 }
 
@@ -120,6 +141,6 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #d1d1d6;
   border-radius: 10px;
 }
