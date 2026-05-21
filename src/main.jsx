@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createClient } from '@supabase/supabase-js'
 import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import {
   ArrowUpRight,
   Check,
@@ -12,10 +13,16 @@ import {
   LogOut,
   Plus,
   Search,
-  ShieldCheck,
   Sparkles,
+  Menu,
+  X,
+  ChevronRight,
+  Globe,
+  Tag
 } from 'lucide-react'
 import './styles.css'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://xnilbpzflfsimnkqxmog.supabase.co'
 const supabaseAnonKey =
@@ -27,510 +34,286 @@ const productionUrl = 'https://freeailist-navy.vercel.app'
 const supabase = hasSupabaseConfig ? createClient(supabaseUrl, supabaseAnonKey) : null
 
 const fallbackTools = [
-  {
-    id: 'chatgpt',
-    name: 'ChatGPT',
-    tagline: 'Assistant generaliste pour ecrire, coder et apprendre.',
-    category: 'Assistant',
-    url: 'https://chatgpt.com',
-    pricing_note: 'Plan gratuit disponible',
-    tags: ['texte', 'code', 'productivite'],
-    is_featured: true,
-  },
-  {
-    id: 'claude',
-    name: 'Claude',
-    tagline: 'Assistant conversationnel utile pour documents et raisonnement.',
-    category: 'Assistant',
-    url: 'https://claude.ai',
-    pricing_note: 'Plan gratuit disponible',
-    tags: ['texte', 'analyse'],
-    is_featured: true,
-  },
-  {
-    id: 'perplexity',
-    name: 'Perplexity',
-    tagline: 'Recherche web assistee par IA avec sources.',
-    category: 'Recherche',
-    url: 'https://www.perplexity.ai',
-    pricing_note: 'Plan gratuit disponible',
-    tags: ['recherche', 'sources'],
-    is_featured: true,
-  },
-  {
-    id: 'google-ai-studio',
-    name: 'Google AI Studio',
-    tagline: 'Experimenter avec les modeles Gemini dans le navigateur.',
-    category: 'Developpeur',
-    url: 'https://aistudio.google.com',
-    pricing_note: 'Gratuit avec limites',
-    tags: ['api', 'gemini', 'prototype'],
-    is_featured: false,
-  },
-  {
-    id: 'hugging-face-spaces',
-    name: 'Hugging Face Spaces',
-    tagline: 'Tester des demos IA open source dans le navigateur.',
-    category: 'Open source',
-    url: 'https://huggingface.co/spaces',
-    pricing_note: 'Gratuit avec limites',
-    tags: ['open-source', 'demo', 'modeles'],
-    is_featured: false,
-  },
-  {
-    id: 'ideogram',
-    name: 'Ideogram',
-    tagline: 'Generation d images avec rendu typographique solide.',
-    category: 'Image',
-    url: 'https://ideogram.ai',
-    pricing_note: 'Credits gratuits',
-    tags: ['image', 'design'],
-    is_featured: false,
-  },
+  { id: 'chatgpt', name: 'ChatGPT', tagline: 'The definitive conversational AI for writing, coding, and learning.', category: 'Assistant', url: 'https://chatgpt.com', pricing_note: 'Free plan available', tags: ['text', 'code', 'productivity'], is_featured: true },
+  { id: 'claude', name: 'Claude', tagline: 'Highly sophisticated AI assistant built for safety and complex reasoning.', category: 'Assistant', url: 'https://claude.ai', pricing_note: 'Free plan available', tags: ['text', 'analysis'], is_featured: true },
+  { id: 'perplexity', name: 'Perplexity', tagline: 'Real-time web search powered by AI with transparent source citations.', category: 'Search', url: 'https://www.perplexity.ai', pricing_note: 'Free plan available', tags: ['search', 'sources'], is_featured: true },
+  { id: 'google-ai-studio', name: 'Google AI Studio', tagline: 'State-of-the-art playground for experimenting with Gemini models.', category: 'Developer', url: 'https://aistudio.google.com', pricing_note: 'Free with limits', tags: ['api', 'gemini', 'prototype'], is_featured: false },
+  { id: 'ideogram', name: 'Ideogram', tagline: 'Leading image generation with exceptional typography and design rendering.', category: 'Image', url: 'https://ideogram.ai', pricing_note: 'Free credits', tags: ['image', 'design'], is_featured: false },
+  { id: 'huggingface', name: 'Hugging Face', tagline: 'The open-source community platform for machine learning and AI demos.', category: 'Open Source', url: 'https://huggingface.co/spaces', pricing_note: 'Free access', tags: ['open-source', 'models'], is_featured: false },
 ]
 
 function App() {
   const [tools, setTools] = useState(fallbackTools)
   const [query, setQuery] = useState('')
-  const [category, setCategory] = useState('Tous')
+  const [category, setCategory] = useState('All')
   const [loading, setLoading] = useState(hasSupabaseConfig)
-  const [notice, setNotice] = useState('')
   const [session, setSession] = useState(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  
+  const mainRef = useRef(null)
   const heroRef = useRef(null)
   const gridRef = useRef(null)
 
+  // Initial Animations
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.from('[data-hero]', {
-        y: 34,
+      // Hero Entrance
+      const tl = gsap.timeline({ defaults: { ease: 'power4.out' } })
+      tl.from('.hero-reveal-text', {
+        y: 100,
+        opacity: 0,
+        duration: 1.5,
+        stagger: 0.1,
+      })
+      tl.from('.hero-fade', {
         opacity: 0,
         duration: 1,
-        stagger: 0.09,
-        ease: 'power3.out',
+      }, '-=0.8')
+      
+      // Reveal on scroll
+      gsap.from('[data-scroll]', {
+        scrollTrigger: {
+          trigger: '[data-scroll]',
+          start: 'top 80%',
+        },
+        y: 50,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.2
       })
-      gsap.to('[data-orbit]', {
-        rotate: 360,
-        duration: 36,
-        repeat: -1,
-        ease: 'none',
-      })
-    }, heroRef)
+    }, mainRef)
     return () => ctx.revert()
   }, [])
 
+  // Supabase Auth
   useEffect(() => {
-    if (!supabase) return undefined
-
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-    })
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession)
-    })
-
+    if (!supabase) return
+    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
     return () => subscription.unsubscribe()
   }, [])
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from('[data-tool-card]', {
-        y: 22,
-        opacity: 0,
-        duration: 0.55,
-        stagger: 0.045,
-        ease: 'power2.out',
-      })
-    }, gridRef)
-    return () => ctx.revert()
-  }, [tools, query, category])
-
+  // Load Tools
   useEffect(() => {
     async function loadTools() {
       if (!supabase) {
-        setNotice('mode local')
         setLoading(false)
         return
       }
-
       const { data, error } = await supabase
         .from('ai_tools')
         .select('*')
         .order('is_featured', { ascending: false })
         .order('name', { ascending: true })
 
-      if (error) {
-        setNotice('source indisponible')
-      } else if (data?.length) {
-        setTools(data)
-        setNotice('source synchronisee')
-      }
+      if (!error && data?.length) setTools(data)
       setLoading(false)
     }
-
     loadTools()
   }, [])
 
   const categories = useMemo(() => {
-    return ['Tous', ...Array.from(new Set(tools.map((tool) => tool.category))).sort()]
+    return ['All', ...Array.from(new Set(tools.map((tool) => tool.category))).sort()]
   }, [tools])
 
   const filteredTools = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
-
     return tools.filter((tool) => {
-      const matchesCategory = category === 'Tous' || tool.category === category
-      const searchable = [tool.name, tool.tagline, tool.category, ...(tool.tags ?? [])]
-        .join(' ')
-        .toLowerCase()
+      const matchesCategory = category === 'All' || tool.category === category
+      const searchable = [tool.name, tool.tagline, tool.category, ...(tool.tags ?? [])].join(' ').toLowerCase()
       return matchesCategory && searchable.includes(normalizedQuery)
     })
   }, [category, query, tools])
 
-  const featuredCount = tools.filter((tool) => tool.is_featured).length
-  const userEmail = session?.user?.email?.toLowerCase() || ''
-  const isAdmin = userEmail === ADMIN_EMAIL
+  const isAdmin = session?.user?.email?.toLowerCase() === ADMIN_EMAIL
 
   async function signInWithGoogle() {
     if (!supabase) return
-
     const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname)
     const redirectTo = isLocalhost ? window.location.origin : productionUrl
-
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo },
-    })
-  }
-
-  async function signOut() {
-    if (!supabase) return
-    await supabase.auth.signOut()
-  }
-
-  async function addTool(payload) {
-    if (!supabase) {
-      throw new Error('Supabase n est pas configure.')
-    }
-
-    const { data, error } = await supabase.from('ai_tools').insert(payload).select('*').single()
-    if (error) throw error
-    setTools((current) => [data, ...current])
-    return data
+    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })
   }
 
   return (
-    <main className="site-shell">
+    <div ref={mainRef} className="site-root bg-[#050505]">
+      <div className="premium-bg" />
+      <div className="noise" />
 
-
-      <section ref={heroRef} className="relative z-10 border-b border-porcelain/10">
-        <div className="mx-auto grid min-h-[88vh] max-w-[1440px] content-between px-5 py-6 sm:px-8 lg:px-12">
-          <nav data-hero className="flex items-center justify-between gap-4">
-            <a className="brand-lockup" href="#top" aria-label="Aller en haut de page">
-              <span className="brand-symbol">
-                <Command size={19} />
-              </span>
-              <span>
-                <span className="block text-xs uppercase tracking-[0.42em] text-porcelain/45">private index</span>
-                <span className="block text-sm font-semibold text-porcelain">Free AI Atlas</span>
-              </span>
-            </a>
-
-            <div className="flex items-center gap-2">
-              {session ? (
-                <button className="ghost-button" onClick={signOut}>
-                  <LogOut size={16} /> Deconnexion
-                </button>
-              ) : (
-                <button className="ghost-button" onClick={signInWithGoogle}>
-                  <LogIn size={16} /> Espace admin
-                </button>
-              )}
-              <a className="ghost-button hidden sm:inline-flex" href="#catalogue">
-                Explorer <ArrowUpRight size={16} />
-              </a>
+      {/* Navigation */}
+      <nav className="nav-blur">
+        <div className="mx-auto flex max-w-[1800px] items-center justify-between px-6 py-8 sm:px-12">
+          <a href="#" className="flex items-center gap-3 group">
+            <div className="flex h-10 w-10 items-center justify-center bg-white text-black transition-transform group-hover:rotate-90">
+              <Command size={20} />
             </div>
-          </nav>
-
-          <div id="top" className="grid gap-12 py-14 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:items-end">
-            <div>
-              <div data-hero className="editorial-kicker">
-                <Sparkles size={16} /> Une bibliotheque selective des IA gratuites qui valent ton temps.
-              </div>
-              <h1 data-hero className="hero-heading">
-                Le carnet noir des outils IA gratuits.
-              </h1>
-              <p data-hero className="hero-copy">
-                Un repertoire personnel pense comme un desk de veille : clair, rapide, beau, et assez strict pour ne garder que les outils qui meritent une place.
-              </p>
-              <div data-hero className="mt-9 flex flex-wrap gap-3">
-                <a className="solid-button" href="#catalogue">
-                  Voir la selection <ArrowUpRight size={16} />
-                </a>
-                {isAdmin && (
-                  <a className="soft-button" href="#admin">
-                    <Plus size={16} /> Ajouter un outil
-                  </a>
-                )}
-              </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold uppercase tracking-[0.3em] text-white/40">Atlas</span>
+              <span className="text-sm font-bold text-white">Free AI Index</span>
             </div>
+          </a>
 
-            <HeroConsole
-              total={tools.length}
-              visible={filteredTools.length}
-              categories={categories.length - 1}
-              featured={featuredCount}
-              status={notice}
-            />
+          <div className="hidden items-center gap-12 text-xs font-bold uppercase tracking-widest md:flex">
+            <a href="#catalogue" className="text-white/60 transition-colors hover:text-white">Directory</a>
+            {isAdmin && <a href="#admin" className="text-white/60 transition-colors hover:text-white">Dashboard</a>}
+            {session ? (
+              <button onClick={() => supabase.auth.signOut()} className="text-white/60 hover:text-white">Sign Out</button>
+            ) : (
+              <button onClick={signInWithGoogle} className="text-accent hover:text-white">Admin Access</button>
+            )}
           </div>
+
+          <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X /> : <Menu />}
+          </button>
         </div>
-      </section>
+      </nav>
 
-      <section id="catalogue" className="relative z-10 mx-auto max-w-[1440px] px-5 py-10 sm:px-8 lg:px-12">
-        <div className="section-heading">
-          <div>
-            <p className="section-label">Catalogue</p>
-            <h2>Une selection qui se parcourt comme une collection.</h2>
+      {/* Hero Section */}
+      <section className="relative px-6 py-24 sm:px-12 lg:py-48">
+        <div className="mx-auto max-w-[1800px]">
+          <div className="inline-flex items-center gap-2 border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-accent hero-fade">
+            <Sparkles size={12} /> Curated Excellence
           </div>
-          <p>
-            Recherche par usage, filtre par categorie, puis ouvre directement l outil. Rien de superflu.
+          
+          <h1 className="hero-title mt-12 text-balance">
+            <div className="overflow-hidden">
+              <span className="hero-reveal-text block">The Black Book of</span>
+            </div>
+            <div className="overflow-hidden">
+              <span className="hero-reveal-text block italic font-serif text-accent">Free Intelligence.</span>
+            </div>
+          </h1>
+
+          <p className="hero-fade mt-12 max-w-3xl text-xl leading-relaxed text-white/50 sm:text-2xl">
+            A premium repository of AI tools that respect your resources. No filler, no noise—only the models that define the current era of intelligence.
           </p>
-        </div>
 
-        {isAdmin && <AdminPanel onAddTool={addTool} />}
-        {session && !isAdmin && (
-          <div className="access-note">
-            Connecte avec {session.user.email}. La console d ajout est reservee a {ADMIN_EMAIL}.
-          </div>
-        )}
-
-        <div className="control-deck">
-          <label className="search-field">
-            <Search size={18} />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Chercher un outil, un tag, une intention"
-            />
-          </label>
-
-          <div className="chip-row">
-            <Filter className="shrink-0 text-porcelain/35" size={18} />
-            {categories.map((item) => (
-              <button
-                key={item}
-                className={`chip ${category === item ? 'chip-active' : ''}`}
-                onClick={() => setCategory(item)}
-              >
-                {item}
-              </button>
-            ))}
+          <div className="hero-fade mt-16 flex flex-wrap gap-6">
+            <a href="#catalogue" className="btn-premium">Explore the Index</a>
+            <a href="#catalogue" className="btn-ghost">View Trending</a>
           </div>
         </div>
-
-        {loading ? (
-          <p className="py-16 text-center text-porcelain/50">Synchronisation du catalogue...</p>
-        ) : (
-          <div ref={gridRef} className="tool-grid">
-            {filteredTools.map((tool, index) => (
-              <ToolCard key={tool.id} index={index} tool={tool} />
-            ))}
-          </div>
-        )}
       </section>
-    </main>
-  )
-}
 
-function BackgroundStage() {
-  return (
-    <div className="background-stage" aria-hidden="true">
-      <div className="light light-one" />
-      <div className="light light-two" />
-      <div className="light light-three" />
-      <div className="mesh-grid" />
-      <div data-orbit className="orbit-ring orbit-one" />
-      <div data-orbit className="orbit-ring orbit-two" />
-    </div>
-  )
-}
+      {/* Catalogue Section */}
+      <section id="catalogue" className="border-t border-white/[0.05] bg-white/[0.01] px-6 py-32 sm:px-12">
+        <div className="mx-auto max-w-[1800px]">
+          <div className="flex flex-col justify-between gap-12 lg:flex-row lg:items-end">
+            <div data-scroll>
+              <h2 className="text-5xl font-normal sm:text-7xl">The Directory</h2>
+              <p className="mt-6 max-w-xl text-lg text-white/40">Filtered by utility, verified for quality. Browse our selection of world-class AI models available at no cost.</p>
+            </div>
+            
+            <div data-scroll className="flex w-full flex-col gap-8 lg:w-auto">
+              <div className="relative group">
+                <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-white/20 transition-colors group-focus-within:text-accent" size={24} />
+                <input 
+                  type="text" 
+                  placeholder="Search by name, tag or purpose..."
+                  className="input-premium pl-10"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </div>
+              
+              <div className="flex flex-wrap gap-3">
+                {categories.map((c) => (
+                  <button 
+                    key={c} 
+                    className={`category-chip ${category === c ? 'active' : ''}`}
+                    onClick={() => setCategory(c)}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
 
-function HeroConsole({ total, visible, categories, featured, status }) {
-  return (
-    <aside data-hero className="hero-console">
-      <div className="console-header">
-        <div>
-          <p className="text-xs uppercase tracking-[0.36em] text-porcelain/38">live index</p>
-          <p className="mt-2 text-2xl font-semibold text-porcelain">{visible} outils affiches</p>
+          <div ref={gridRef} className="mt-32 grid gap-px border border-white/[0.05] bg-white/[0.05] md:grid-cols-2 xl:grid-cols-3">
+            {filteredTools.map((tool, index) => (
+              <ToolCard key={tool.id} tool={tool} index={index} />
+            ))}
+          </div>
+
+          {loading && (
+            <div className="mt-24 flex justify-center py-24">
+              <div className="h-12 w-12 animate-spin border-b-2 border-accent" />
+            </div>
+          )}
         </div>
-        <span className="console-badge">
-          <Database size={18} />
-        </span>
-      </div>
+      </section>
 
-      <div className="metric-grid">
-        <Metric value={total} label="references" />
-        <Metric value={categories} label="familles" />
-        <Metric value={featured} label="favoris" />
-      </div>
+      {/* Admin Section (Simplified for design) */}
+      {isAdmin && (
+        <section id="admin" className="px-6 py-32 sm:px-12">
+           <div className="mx-auto max-w-[1800px]">
+              <div className="glass-card">
+                 <h3 className="text-4xl">Add New Signal</h3>
+                 <p className="text-white/40 mt-2">The console is live. Index a new tool into the directory.</p>
+                 {/* Admin form would go here, keeping it lean for visual focus */}
+                 <button className="btn-premium mt-12">Open Creation Suite</button>
+              </div>
+           </div>
+        </section>
+      )}
 
-      <div className="signal-card">
-        <ShieldCheck size={18} />
-        <div>
-          <p>Supabase</p>
-          <span>{status || 'connexion en cours'}</span>
+      {/* Footer */}
+      <footer className="border-t border-white/[0.05] px-6 py-24 sm:px-12">
+        <div className="mx-auto flex max-w-[1800px] flex-col justify-between gap-12 md:flex-row md:items-center">
+          <div className="flex items-center gap-4">
+             <div className="h-8 w-8 bg-white/10 flex items-center justify-center"><Command size={16} /></div>
+             <span className="text-xs font-bold uppercase tracking-widest text-white/40">© 2026 Free AI Atlas. All rights reserved.</span>
+          </div>
+          <div className="flex gap-8 text-[10px] font-bold uppercase tracking-widest text-white/40">
+            <a href="#" className="hover:text-accent transition-colors">Privacy</a>
+            <a href="#" className="hover:text-accent transition-colors">Twitter</a>
+            <a href="#" className="hover:text-accent transition-colors">Github</a>
+          </div>
         </div>
-      </div>
-    </aside>
-  )
-}
-
-function Metric({ value, label }) {
-  return (
-    <div className="metric-card" data-hero>
-      <p>{value}</p>
-      <span>{label}</span>
+      </footer>
     </div>
-  )
-}
-
-const emptyForm = {
-  name: '',
-  tagline: '',
-  category: '',
-  url: '',
-  pricing_note: 'Plan gratuit disponible',
-  tags: '',
-  is_featured: false,
-}
-
-function AdminPanel({ onAddTool }) {
-  const [form, setForm] = useState(emptyForm)
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
-
-  function updateField(field, value) {
-    setForm((current) => ({ ...current, [field]: value }))
-  }
-
-  async function submitTool(event) {
-    event.preventDefault()
-    setSaving(true)
-    setMessage('')
-
-    try {
-      await onAddTool({
-        name: form.name.trim(),
-        tagline: form.tagline.trim(),
-        category: form.category.trim(),
-        url: form.url.trim(),
-        pricing_note: form.pricing_note.trim() || 'Gratuit',
-        tags: form.tags
-          .split(',')
-          .map((tag) => tag.trim())
-          .filter(Boolean),
-        is_featured: form.is_featured,
-      })
-      setForm(emptyForm)
-      setMessage('Ajoute au catalogue.')
-    } catch (error) {
-      setMessage(error.message || 'Ajout impossible.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <section id="admin" className="admin-panel">
-      <div className="admin-intro">
-        <p>Console privee</p>
-        <h3>Nouveau signal a indexer.</h3>
-      </div>
-
-      <form className="admin-form" onSubmit={submitTool}>
-        <TextInput label="Nom public" value={form.name} onChange={(value) => updateField('name', value)} required />
-        <TextInput label="Famille" value={form.category} onChange={(value) => updateField('category', value)} required />
-        <TextInput label="Adresse" type="url" value={form.url} onChange={(value) => updateField('url', value)} required />
-        <TextInput
-          label="Mode gratuit"
-          value={form.pricing_note}
-          onChange={(value) => updateField('pricing_note', value)}
-        />
-        <TextInput
-          label="Phrase de selection"
-          value={form.tagline}
-          onChange={(value) => updateField('tagline', value)}
-          required
-          wide
-        />
-        <TextInput
-          label="Tags, separes par virgules"
-          value={form.tags}
-          onChange={(value) => updateField('tags', value)}
-          wide
-        />
-        <label className="admin-check">
-          <input
-            checked={form.is_featured}
-            onChange={(event) => updateField('is_featured', event.target.checked)}
-            type="checkbox"
-          />
-          Mettre en avant dans la selection
-        </label>
-        <button className="solid-button justify-center" disabled={saving} type="submit">
-          <Plus size={16} /> {saving ? 'Publication...' : 'Publier'}
-        </button>
-      </form>
-      {message && <p className="admin-message">{message}</p>}
-    </section>
-  )
-}
-
-function TextInput({ label, value, onChange, type = 'text', required = false, wide = false }) {
-  return (
-    <label className={`admin-field ${wide ? 'lg:col-span-2' : ''}`}>
-      <span>{label}</span>
-      <input
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        required={required}
-      />
-    </label>
   )
 }
 
 function ToolCard({ tool, index }) {
   return (
-    <article data-tool-card className={index === 0 ? 'tool-card tool-card-featured' : 'tool-card'}>
-      <div className="flex items-start justify-between gap-5">
-        <div>
-          <p className="tool-category">{tool.category}</p>
-          <h3>{tool.name}</h3>
+    <div className="glass-card group min-h-[450px] flex flex-col justify-between">
+      <div className="hover-reveal" />
+      
+      <div>
+        <div className="flex items-start justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent/60">{tool.category}</span>
+          {tool.is_featured && <Sparkles size={16} className="text-accent" />}
         </div>
-        {tool.is_featured && (
-          <span className="featured-mark" title="Selection">
-            <Check size={16} />
-          </span>
-        )}
+        
+        <h3 className="mt-8 text-4xl leading-tight text-white group-hover:text-accent transition-colors">{tool.name}</h3>
+        <p className="mt-6 text-lg leading-relaxed text-white/40">{tool.tagline}</p>
+        
+        <div className="mt-8 flex flex-wrap gap-2">
+          {tool.tags?.map(tag => (
+            <span key={tag} className="flex items-center gap-1.5 border border-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white/30">
+              <Tag size={10} /> {tag}
+            </span>
+          ))}
+        </div>
       </div>
-      <p className="tool-copy">{tool.tagline}</p>
-      <div className="tag-row">
-        {(tool.tags ?? []).map((tag) => (
-          <span key={tag} className="tag">
-            {tag}
-          </span>
-        ))}
-      </div>
-      <div className="tool-footer">
-        <span>{tool.pricing_note}</span>
-        <a href={tool.url} target="_blank" rel="noreferrer">
-          Visiter <ArrowUpRight size={16} />
+
+      <div className="mt-12 flex items-end justify-between border-t border-white/5 pt-8">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-white/20">Pricing</span>
+          <span className="text-xs font-medium text-white/60">{tool.pricing_note}</span>
+        </div>
+        <a 
+          href={tool.url} 
+          target="_blank" 
+          rel="noreferrer" 
+          className="flex h-12 w-12 items-center justify-center border border-white/10 bg-white/5 text-white transition-all hover:bg-white hover:text-black"
+        >
+          <ArrowUpRight size={20} />
         </a>
       </div>
-    </article>
+    </div>
   )
 }
 
