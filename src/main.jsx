@@ -9,6 +9,9 @@ import {
   Database,
   Filter,
   Layers3,
+  LogIn,
+  LogOut,
+  Plus,
   Search,
   Sparkles,
 } from 'lucide-react'
@@ -18,6 +21,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://xnilbpzflfsimn
 const supabaseAnonKey =
   import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_M7ILY-6b_MRYuu4l3BXLOA_TQEPKTyA'
 const hasSupabaseConfig = Boolean(supabaseUrl && supabaseAnonKey)
+const ADMIN_EMAIL = 'ndarawpro@gmail.com'
 
 const supabase = hasSupabaseConfig ? createClient(supabaseUrl, supabaseAnonKey) : null
 
@@ -90,6 +94,7 @@ function App() {
   const [category, setCategory] = useState('Tous')
   const [loading, setLoading] = useState(hasSupabaseConfig)
   const [notice, setNotice] = useState('')
+  const [session, setSession] = useState(null)
   const heroRef = useRef(null)
   const gridRef = useRef(null)
 
@@ -112,6 +117,22 @@ function App() {
       })
     }, heroRef)
     return () => ctx.revert()
+  }, [])
+
+  useEffect(() => {
+    if (!supabase) return undefined
+
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession)
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
   useEffect(() => {
@@ -171,6 +192,35 @@ function App() {
 
   const featuredCount = tools.filter((tool) => tool.is_featured).length
   const visibleCount = filteredTools.length
+  const userEmail = session?.user?.email?.toLowerCase() || ''
+  const isAdmin = userEmail === ADMIN_EMAIL
+
+  async function signInWithGoogle() {
+    if (!supabase) return
+
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    })
+  }
+
+  async function signOut() {
+    if (!supabase) return
+    await supabase.auth.signOut()
+  }
+
+  async function addTool(payload) {
+    if (!supabase) {
+      throw new Error('Supabase n est pas configure.')
+    }
+
+    const { data, error } = await supabase.from('ai_tools').insert(payload).select('*').single()
+    if (error) throw error
+    setTools((current) => [data, ...current])
+    return data
+  }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-cloud text-ink">
@@ -190,9 +240,20 @@ function App() {
               </span>
               Free AI List
             </div>
-            <a className="icon-link" href="#catalogue">
-              Catalogue <ArrowUpRight size={16} />
-            </a>
+            <div className="flex items-center gap-2">
+              {session ? (
+                <button className="icon-link" onClick={signOut}>
+                  <LogOut size={16} /> Sortir
+                </button>
+              ) : (
+                <button className="icon-link" onClick={signInWithGoogle}>
+                  <LogIn size={16} /> Google
+                </button>
+              )}
+              <a className="icon-link hidden sm:inline-flex" href="#catalogue">
+                Catalogue <ArrowUpRight size={16} />
+              </a>
+            </div>
           </nav>
 
           <div className="grid gap-10 py-14 lg:grid-cols-[1.04fr_0.96fr] lg:items-end">
@@ -214,6 +275,11 @@ function App() {
                 <span className="status-pill">
                   <Database size={16} /> {notice || 'Connexion Supabase'}
                 </span>
+                {isAdmin && (
+                  <a className="status-pill" href="#admin">
+                    <Plus size={16} /> Admin actif
+                  </a>
+                )}
               </div>
             </div>
 
@@ -238,6 +304,13 @@ function App() {
       </section>
 
       <section id="catalogue" className="relative mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
+        {isAdmin && <AdminPanel onAddTool={addTool} />}
+        {session && !isAdmin && (
+          <div className="mb-6 rounded-lg border border-rose/30 bg-rose/[0.08] p-4 text-sm text-white/70">
+            Connecte avec {session.user.email}. Le panneau admin est reserve a {ADMIN_EMAIL}.
+          </div>
+        )}
+
         <div className="sticky top-0 z-10 -mx-5 border-b border-white/10 bg-cloud/70 px-5 py-4 backdrop-blur-2xl sm:-mx-8 sm:px-8 lg:-mx-10 lg:px-10">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <label className="search-field">
@@ -274,6 +347,112 @@ function App() {
         )}
       </section>
     </main>
+  )
+}
+
+const emptyForm = {
+  name: '',
+  tagline: '',
+  category: '',
+  url: '',
+  pricing_note: 'Plan gratuit disponible',
+  tags: '',
+  is_featured: false,
+}
+
+function AdminPanel({ onAddTool }) {
+  const [form, setForm] = useState(emptyForm)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
+
+  function updateField(field, value) {
+    setForm((current) => ({ ...current, [field]: value }))
+  }
+
+  async function submitTool(event) {
+    event.preventDefault()
+    setSaving(true)
+    setMessage('')
+
+    try {
+      await onAddTool({
+        name: form.name.trim(),
+        tagline: form.tagline.trim(),
+        category: form.category.trim(),
+        url: form.url.trim(),
+        pricing_note: form.pricing_note.trim() || 'Gratuit',
+        tags: form.tags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        is_featured: form.is_featured,
+      })
+      setForm(emptyForm)
+      setMessage('Outil ajoute avec succes.')
+    } catch (error) {
+      setMessage(error.message || 'Impossible d ajouter cet outil.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <section id="admin" className="admin-panel mb-8">
+      <div>
+        <p className="text-sm font-medium text-cyan">Admin</p>
+        <h2 className="mt-2 text-3xl font-semibold text-white">Ajouter une IA gratuite</h2>
+      </div>
+
+      <form className="mt-6 grid gap-4 lg:grid-cols-2" onSubmit={submitTool}>
+        <TextInput label="Nom" value={form.name} onChange={(value) => updateField('name', value)} required />
+        <TextInput label="Categorie" value={form.category} onChange={(value) => updateField('category', value)} required />
+        <TextInput label="URL" type="url" value={form.url} onChange={(value) => updateField('url', value)} required />
+        <TextInput
+          label="Note gratuite"
+          value={form.pricing_note}
+          onChange={(value) => updateField('pricing_note', value)}
+        />
+        <TextInput
+          label="Description courte"
+          value={form.tagline}
+          onChange={(value) => updateField('tagline', value)}
+          required
+          wide
+        />
+        <TextInput
+          label="Tags separes par virgules"
+          value={form.tags}
+          onChange={(value) => updateField('tags', value)}
+          wide
+        />
+        <label className="admin-check">
+          <input
+            checked={form.is_featured}
+            onChange={(event) => updateField('is_featured', event.target.checked)}
+            type="checkbox"
+          />
+          Marquer comme favori
+        </label>
+        <button className="primary-link justify-center" disabled={saving} type="submit">
+          <Plus size={16} /> {saving ? 'Ajout...' : 'Ajouter'}
+        </button>
+      </form>
+      {message && <p className="mt-4 text-sm text-white/65">{message}</p>}
+    </section>
+  )
+}
+
+function TextInput({ label, value, onChange, type = 'text', required = false, wide = false }) {
+  return (
+    <label className={`admin-field ${wide ? 'lg:col-span-2' : ''}`}>
+      <span>{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        required={required}
+      />
+    </label>
   )
 }
 

@@ -1,5 +1,46 @@
 create extension if not exists pgcrypto;
 
+create schema if not exists app_private;
+
+create table if not exists public.app_admins (
+  email text primary key,
+  created_at timestamptz not null default now()
+);
+
+alter table public.app_admins enable row level security;
+
+revoke all on public.app_admins from anon, authenticated;
+
+insert into public.app_admins (email)
+values ('ndarawpro@gmail.com')
+on conflict (email) do nothing;
+
+create or replace function app_private.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.app_admins
+    where lower(email) = lower(auth.jwt() ->> 'email')
+  );
+$$;
+
+revoke all on function app_private.is_admin() from public;
+grant usage on schema app_private to authenticated;
+grant execute on function app_private.is_admin() to authenticated;
+grant select on public.app_admins to authenticated;
+
+drop policy if exists "Admins can read admin emails" on public.app_admins;
+create policy "Admins can read admin emails"
+on public.app_admins
+for select
+to authenticated
+using (app_private.is_admin());
+
 create table if not exists public.ai_tools (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -23,9 +64,30 @@ to anon, authenticated
 using (true);
 
 drop policy if exists "Authenticated users can add AI tools" on public.ai_tools;
+drop policy if exists "Admins can insert AI tools" on public.ai_tools;
+create policy "Admins can insert AI tools"
+on public.ai_tools
+for insert
+to authenticated
+with check (app_private.is_admin());
+
+drop policy if exists "Admins can update AI tools" on public.ai_tools;
+create policy "Admins can update AI tools"
+on public.ai_tools
+for update
+to authenticated
+using (app_private.is_admin())
+with check (app_private.is_admin());
+
+drop policy if exists "Admins can delete AI tools" on public.ai_tools;
+create policy "Admins can delete AI tools"
+on public.ai_tools
+for delete
+to authenticated
+using (app_private.is_admin());
 
 grant select on public.ai_tools to anon;
-grant select on public.ai_tools to authenticated;
+grant select, insert, update, delete on public.ai_tools to authenticated;
 
 create or replace function public.set_updated_at()
 returns trigger
