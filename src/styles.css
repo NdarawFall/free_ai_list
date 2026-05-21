@@ -48,7 +48,14 @@
   }
 
   .glow-nexus {
-    @apply absolute rounded-full blur-[120px] opacity-10;
+    @apply absolute rounded-full blur-[120px] opacity-20;
+    animation: drift 20s infinite alternate ease-in-out;
+  }
+
+  @keyframes drift {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(10vw, 15vh) scale(1.2); }
+    100% { transform: translate(-5vw, 10vh) scale(0.9); }
   }
 
   /* Cards - Frosted Tile */
