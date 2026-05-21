@@ -22,6 +22,7 @@ const supabaseAnonKey =
   import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_M7ILY-6b_MRYuu4l3BXLOA_TQEPKTyA'
 const hasSupabaseConfig = Boolean(supabaseUrl && supabaseAnonKey)
 const ADMIN_EMAIL = 'ndarawpro@gmail.com'
+const productionUrl = 'https://freeailist-navy.vercel.app'
 
 const supabase = hasSupabaseConfig ? createClient(supabaseUrl, supabaseAnonKey) : null
 
@@ -198,10 +199,13 @@ function App() {
   async function signInWithGoogle() {
     if (!supabase) return
 
+    const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+    const redirectTo = isLocalhost ? window.location.origin : productionUrl
+
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin,
+        redirectTo,
       },
     })
   }
