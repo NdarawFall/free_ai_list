@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,115 +6,129 @@
 
 @layer base {
   :root {
-    --apple-bg: #000000;
-    --apple-card: #1c1c1e;
-    --apple-text: #f5f5f7;
-    --apple-muted: #86868b;
-    --apple-accent: #0071e3;
-    --radius: 22px;
+    --bg: #000000;
+    --accent: #0071e3;
+    --accent-glow: rgba(0, 113, 227, 0.35);
+    --card-bg: rgba(28, 28, 30, 0.5);
+    --border: rgba(255, 255, 255, 0.08);
+    --text-main: #f5f5f7;
+    --text-muted: #86868b;
+  }
+
+  * {
+    @apply selection:bg-accent/30 selection:text-white;
   }
 
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
-    background: var(--apple-bg);
-    color: var(--apple-text);
+    background: var(--bg);
   }
 
   body {
-    margin: 0;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    @apply bg-black text-[#f5f5f7] antialiased overflow-x-hidden;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
 @layer components {
-  .nav-glass {
-    @apply fixed top-0 left-0 right-0 z-[100] h-16 border-b border-white/[0.05] bg-black/80 backdrop-blur-2xl transition-all duration-300;
+  /* Layout & Grids */
+  .master-container {
+    @apply mx-auto max-w-[1440px] px-6 sm:px-12 lg:px-24;
   }
 
-  .nav-link {
-    @apply text-[13px] font-medium text-white/60 transition-all hover:text-white;
+  /* Navigation */
+  .nav-master {
+    @apply fixed top-0 left-0 right-0 z-[1000] h-16 border-b border-white/[0.04] bg-black/60 backdrop-blur-[32px] transition-all duration-500;
   }
 
-  .admin-section {
-    @apply my-24 rounded-[32px] bg-[#1c1c1e] border border-white/[0.05] p-8 sm:p-12;
+  /* Background Atmosphere */
+  .parallax-glow {
+    @apply fixed inset-0 -z-10 pointer-events-none;
   }
 
-  .admin-input-group {
-    @apply flex flex-col gap-2;
+  .glow-orb {
+    @apply absolute rounded-full blur-[140px] opacity-20 transition-transform duration-1000 ease-out;
   }
 
-  .admin-label {
-    @apply text-[11px] font-bold uppercase tracking-widest text-[#86868b] ml-4;
+  /* Cards - High Fidelity */
+  .glass-card {
+    @apply relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-white/[0.02] p-8 backdrop-blur-md transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)];
   }
 
-  .admin-input {
-    @apply h-12 w-full rounded-xl bg-white/5 border border-white/10 px-4 text-sm text-white outline-none transition-all focus:border-[#0071e3] focus:bg-white/10;
+  .glass-card:hover {
+    @apply border-white/[0.12] bg-white/[0.04] -translate-y-2;
+    box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.8), 
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   }
 
-  .admin-checkbox {
-    @apply h-5 w-5 rounded border-white/10 bg-white/5 text-[#0071e3] focus:ring-0;
+  .inner-glow {
+    @apply absolute inset-0 opacity-0 transition-opacity duration-700 pointer-events-none;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 113, 227, 0.12) 0%, transparent 80%);
   }
 
-  .hero-glow {
-    background: radial-gradient(circle at 50% -20%, rgba(0, 113, 227, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
-  }
-
-  .apple-card {
-    @apply relative overflow-hidden bg-[#1c1c1e] p-8 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] border border-white/[0.05];
-    border-radius: var(--radius);
-  }
-
-  .apple-card:hover {
-    @apply border-white/[0.15] bg-[#2c2c2e];
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-  }
-
-  .apple-card::before {
-    content: "";
-    @apply absolute inset-0 opacity-0 transition-opacity duration-700;
-    background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(0, 113, 227, 0.1) 0%, transparent 70%);
-  }
-
-  .apple-card:hover::before {
+  .glass-card:hover .inner-glow {
     @apply opacity-100;
   }
 
-  .btn-apple {
-    @apply inline-flex h-12 items-center justify-center rounded-full bg-[#0071e3] px-8 text-sm font-semibold text-white transition-all duration-300 hover:bg-[#0077ed] hover:scale-[1.02] active:scale-[0.98];
+  /* Buttons */
+  .btn-primary {
+    @apply relative inline-flex h-12 items-center justify-center rounded-full bg-[#0071e3] px-8 text-sm font-semibold text-white transition-all duration-300 hover:bg-[#0077ed] hover:scale-[1.03] active:scale-[0.97] shadow-lg shadow-accent/20;
   }
 
-  .btn-ghost {
-    @apply inline-flex h-12 items-center justify-center rounded-full border border-white/10 bg-white/5 px-8 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98];
+  .btn-secondary {
+    @apply inline-flex h-12 items-center justify-center rounded-full border border-white/10 bg-white/5 px-8 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/10 hover:border-white/20;
   }
 
-  .search-input {
-    @apply h-14 w-full rounded-2xl bg-[#1c1c1e] border border-white/5 px-12 text-lg font-medium text-white outline-none transition-all duration-300 focus:bg-[#2c2c2e] focus:border-[#0071e3]/50 focus:ring-4 focus:ring-[#0071e3]/10;
+  /* Official Google Button Style */
+  .btn-google {
+    @apply flex items-center gap-3 bg-white px-5 py-2.5 rounded-full text-sm font-bold text-[#1f1f1f] transition-all hover:bg-[#f8f9fa] hover:shadow-md active:scale-95;
   }
 
-  .category-pill {
-    @apply flex h-9 items-center rounded-full border border-transparent bg-transparent px-5 text-[13px] font-medium text-[#86868b] transition-all duration-300 hover:text-white;
+  /* Typography */
+  .hero-h1 {
+    @apply text-6xl font-bold tracking-tight sm:text-8xl lg:text-[110px] leading-[0.95] text-white;
   }
 
-  .category-pill.active {
+  .section-h2 {
+    @apply text-4xl font-bold tracking-tight text-white sm:text-6xl;
+  }
+
+  /* Inputs */
+  .master-search {
+    @apply h-14 w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] px-14 text-lg font-medium text-white outline-none transition-all duration-500 focus:bg-white/[0.05] focus:border-accent/40 focus:ring-4 focus:ring-accent/5;
+  }
+
+  .pill-filter {
+    @apply px-6 py-2 rounded-full text-[13px] font-semibold text-white/50 transition-all duration-300 hover:text-white border border-transparent;
+  }
+
+  .pill-filter.active {
     @apply bg-white text-black;
   }
 
-  .blur-overlay {
-    @apply fixed inset-0 -z-10 pointer-events-none overflow-hidden;
+  /* Admin Dashboard */
+  .admin-drawer {
+    @apply overflow-hidden rounded-[32px] border border-white/[0.08] bg-white/[0.02] backdrop-blur-3xl p-10 mb-20;
   }
 
-  .blur-circle {
-    @apply absolute rounded-full blur-[120px] opacity-10;
-    background: var(--apple-accent);
+  /* Utility Animations */
+  .mask-text {
+    @apply overflow-hidden block;
   }
+}
 
-  .heading-1 {
-    @apply text-5xl font-bold tracking-tight sm:text-7xl lg:text-[80px] leading-[1.05] text-white;
-  }
-
-  .tag-pill {
-    @apply inline-flex items-center rounded-md bg-white/5 border border-white/5 px-2 py-1 text-[11px] font-semibold uppercase tracking-tight text-[#86868b];
-  }
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #000;
+}
+::-webkit-scrollbar-thumb {
+  background: #222;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #333;
 }
