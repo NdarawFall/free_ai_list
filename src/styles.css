@@ -98,7 +98,7 @@
   }
 
   .hero-heading {
-    @apply mt-8 max-w-6xl font-display text-[4.4rem] font-normal leading-[0.88] tracking-[-0.02em] text-porcelain sm:text-[7rem] lg:text-[9.4rem];
+    @apply mt-8 max-w-6xl font-display text-[3.7rem] font-normal leading-[0.9] tracking-[-0.02em] text-porcelain sm:text-[5.9rem] lg:text-[7.8rem];
     text-wrap: balance;
   }
 
