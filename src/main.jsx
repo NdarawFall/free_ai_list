@@ -18,7 +18,6 @@ import {
   MoreHorizontal,
   LogOut,
   Zap,
-  ArrowRight
 } from 'lucide-react'
 import './styles.css'
 
