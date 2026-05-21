@@ -4,15 +4,15 @@ import { createClient } from '@supabase/supabase-js'
 import { gsap } from 'gsap'
 import {
   ArrowUpRight,
-  BrainCircuit,
   Check,
+  Command,
   Database,
   Filter,
-  Layers3,
   LogIn,
   LogOut,
   Plus,
   Search,
+  ShieldCheck,
   Sparkles,
 } from 'lucide-react'
 import './styles.css'
@@ -102,19 +102,17 @@ function App() {
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.from('[data-hero]', {
-        y: 28,
+        y: 34,
         opacity: 0,
-        duration: 0.9,
-        stagger: 0.08,
+        duration: 1,
+        stagger: 0.09,
         ease: 'power3.out',
       })
-      gsap.from('[data-stat]', {
-        scale: 0.94,
-        opacity: 0,
-        duration: 0.7,
-        stagger: 0.08,
-        delay: 0.25,
-        ease: 'back.out(1.4)',
+      gsap.to('[data-orbit]', {
+        rotate: 360,
+        duration: 36,
+        repeat: -1,
+        ease: 'none',
       })
     }, heroRef)
     return () => ctx.revert()
@@ -139,10 +137,10 @@ function App() {
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.from('[data-tool-card]', {
-        y: 18,
+        y: 22,
         opacity: 0,
-        duration: 0.45,
-        stagger: 0.05,
+        duration: 0.55,
+        stagger: 0.045,
         ease: 'power2.out',
       })
     }, gridRef)
@@ -152,7 +150,7 @@ function App() {
   useEffect(() => {
     async function loadTools() {
       if (!supabase) {
-        setNotice('Mode demo')
+        setNotice('mode local')
         setLoading(false)
         return
       }
@@ -164,10 +162,10 @@ function App() {
         .order('name', { ascending: true })
 
       if (error) {
-        setNotice('Supabase indisponible')
+        setNotice('source indisponible')
       } else if (data?.length) {
         setTools(data)
-        setNotice('Connecte a Supabase')
+        setNotice('source synchronisee')
       }
       setLoading(false)
     }
@@ -192,7 +190,6 @@ function App() {
   }, [category, query, tools])
 
   const featuredCount = tools.filter((tool) => tool.is_featured).length
-  const visibleCount = filteredTools.length
   const userEmail = session?.user?.email?.toLowerCase() || ''
   const isAdmin = userEmail === ADMIN_EMAIL
 
@@ -204,9 +201,7 @@ function App() {
 
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo,
-      },
+      options: { redirectTo },
     })
   }
 
@@ -227,130 +222,177 @@ function App() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-cloud text-ink">
-      <div className="aurora-wrap" aria-hidden="true">
-        <span className="aurora aurora-one" />
-        <span className="aurora aurora-two" />
-        <span className="aurora aurora-three" />
-      </div>
-      <div className="noise-layer" aria-hidden="true" />
+    <main className="site-shell">
+      <BackgroundStage />
 
-      <section ref={heroRef} className="relative border-b border-white/10">
-        <div className="mx-auto grid min-h-[82vh] max-w-7xl content-between px-5 py-6 sm:px-8 lg:px-10">
-          <nav data-hero className="flex items-center justify-between">
-            <div className="flex items-center gap-3 text-sm font-semibold tracking-wide text-white">
-              <span className="brand-mark">
-                <BrainCircuit size={18} />
+      <section ref={heroRef} className="relative z-10 border-b border-porcelain/10">
+        <div className="mx-auto grid min-h-[88vh] max-w-[1440px] content-between px-5 py-6 sm:px-8 lg:px-12">
+          <nav data-hero className="flex items-center justify-between gap-4">
+            <a className="brand-lockup" href="#top" aria-label="Aller en haut de page">
+              <span className="brand-symbol">
+                <Command size={19} />
               </span>
-              Free AI List
-            </div>
+              <span>
+                <span className="block text-xs uppercase tracking-[0.42em] text-porcelain/45">private index</span>
+                <span className="block text-sm font-semibold text-porcelain">Free AI Atlas</span>
+              </span>
+            </a>
+
             <div className="flex items-center gap-2">
               {session ? (
-                <button className="icon-link" onClick={signOut}>
-                  <LogOut size={16} /> Sortir
+                <button className="ghost-button" onClick={signOut}>
+                  <LogOut size={16} /> Deconnexion
                 </button>
               ) : (
-                <button className="icon-link" onClick={signInWithGoogle}>
-                  <LogIn size={16} /> Google
+                <button className="ghost-button" onClick={signInWithGoogle}>
+                  <LogIn size={16} /> Espace admin
                 </button>
               )}
-              <a className="icon-link hidden sm:inline-flex" href="#catalogue">
-                Catalogue <ArrowUpRight size={16} />
+              <a className="ghost-button hidden sm:inline-flex" href="#catalogue">
+                Explorer <ArrowUpRight size={16} />
               </a>
             </div>
           </nav>
 
-          <div className="grid gap-10 py-14 lg:grid-cols-[1.04fr_0.96fr] lg:items-end">
+          <div id="top" className="grid gap-12 py-14 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:items-end">
             <div>
-              <div data-hero className="eyebrow">
-                <Sparkles size={16} /> Catalogue IA gratuit, vivant et prive
+              <div data-hero className="editorial-kicker">
+                <Sparkles size={16} /> Une bibliotheque selective des IA gratuites qui valent ton temps.
               </div>
-              <h1 data-hero className="hero-title mt-6 max-w-5xl text-5xl font-semibold leading-[1.02] sm:text-7xl lg:text-8xl">
-                Les outils IA gratuits que tu veux garder sous la main.
+              <h1 data-hero className="hero-heading">
+                Le carnet noir des outils IA gratuits.
               </h1>
-              <p data-hero className="mt-6 max-w-2xl text-lg leading-8 text-white/[0.64]">
-                Un repertoire personnel, rapide et propre pour retrouver les assistants,
-                generateurs, moteurs de recherche et plateformes IA gratuites que tu connais.
+              <p data-hero className="hero-copy">
+                Un repertoire personnel pense comme un desk de veille : clair, rapide, beau, et assez strict pour ne garder que les outils qui meritent une place.
               </p>
-              <div data-hero className="mt-8 flex flex-wrap gap-3">
-                <a className="primary-link" href="#catalogue">
-                  Explorer <ArrowUpRight size={16} />
+              <div data-hero className="mt-9 flex flex-wrap gap-3">
+                <a className="solid-button" href="#catalogue">
+                  Voir la selection <ArrowUpRight size={16} />
                 </a>
-                <span className="status-pill">
-                  <Database size={16} /> {notice || 'Connexion Supabase'}
-                </span>
                 {isAdmin && (
-                  <a className="status-pill" href="#admin">
-                    <Plus size={16} /> Admin actif
+                  <a className="soft-button" href="#admin">
+                    <Plus size={16} /> Ajouter un outil
                   </a>
                 )}
               </div>
             </div>
 
-            <div data-hero className="panel">
-              <div className="flex items-center justify-between border-b border-white/10 pb-5">
-                <div>
-                  <p className="text-sm text-white/[0.45]">Vue actuelle</p>
-                  <p className="mt-1 text-xl font-semibold text-white">
-                    {visibleCount} outil{visibleCount > 1 ? 's' : ''} visible{visibleCount > 1 ? 's' : ''}
-                  </p>
-                </div>
-                <Layers3 className="text-cyan" size={26} />
-              </div>
-              <div className="mt-6 grid grid-cols-3 gap-3">
-                <Stat value={tools.length} label="Outils" />
-                <Stat value={categories.length - 1} label="Categories" />
-                <Stat value={featuredCount} label="Favoris" />
-              </div>
-            </div>
+            <HeroConsole
+              total={tools.length}
+              visible={filteredTools.length}
+              categories={categories.length - 1}
+              featured={featuredCount}
+              status={notice}
+            />
           </div>
         </div>
       </section>
 
-      <section id="catalogue" className="relative mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
+      <section id="catalogue" className="relative z-10 mx-auto max-w-[1440px] px-5 py-10 sm:px-8 lg:px-12">
+        <div className="section-heading">
+          <div>
+            <p className="section-label">Catalogue</p>
+            <h2>Une selection qui se parcourt comme une collection.</h2>
+          </div>
+          <p>
+            Recherche par usage, filtre par categorie, puis ouvre directement l outil. Rien de superflu.
+          </p>
+        </div>
+
         {isAdmin && <AdminPanel onAddTool={addTool} />}
         {session && !isAdmin && (
-          <div className="mb-6 rounded-lg border border-rose/30 bg-rose/[0.08] p-4 text-sm text-white/70">
-            Connecte avec {session.user.email}. Le panneau admin est reserve a {ADMIN_EMAIL}.
+          <div className="access-note">
+            Connecte avec {session.user.email}. La console d ajout est reservee a {ADMIN_EMAIL}.
           </div>
         )}
 
-        <div className="sticky top-0 z-10 -mx-5 border-b border-white/10 bg-cloud/70 px-5 py-4 backdrop-blur-2xl sm:-mx-8 sm:px-8 lg:-mx-10 lg:px-10">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <label className="search-field">
-              <Search size={18} />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Rechercher un outil, tag ou usage"
-              />
-            </label>
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0">
-              <Filter className="shrink-0 text-white/[0.38]" size={18} />
-              {categories.map((item) => (
-                <button
-                  key={item}
-                  className={`chip ${category === item ? 'chip-active' : ''}`}
-                  onClick={() => setCategory(item)}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
+        <div className="control-deck">
+          <label className="search-field">
+            <Search size={18} />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Chercher un outil, un tag, une intention"
+            />
+          </label>
+
+          <div className="chip-row">
+            <Filter className="shrink-0 text-porcelain/35" size={18} />
+            {categories.map((item) => (
+              <button
+                key={item}
+                className={`chip ${category === item ? 'chip-active' : ''}`}
+                onClick={() => setCategory(item)}
+              >
+                {item}
+              </button>
+            ))}
           </div>
         </div>
 
         {loading ? (
-          <p className="py-16 text-center text-white/[0.55]">Chargement du catalogue...</p>
+          <p className="py-16 text-center text-porcelain/50">Synchronisation du catalogue...</p>
         ) : (
-          <div ref={gridRef} className="grid gap-4 py-8 md:grid-cols-2 xl:grid-cols-3">
-            {filteredTools.map((tool) => (
-              <ToolCard key={tool.id} tool={tool} />
+          <div ref={gridRef} className="tool-grid">
+            {filteredTools.map((tool, index) => (
+              <ToolCard key={tool.id} index={index} tool={tool} />
             ))}
           </div>
         )}
       </section>
     </main>
+  )
+}
+
+function BackgroundStage() {
+  return (
+    <div className="background-stage" aria-hidden="true">
+      <div className="light light-one" />
+      <div className="light light-two" />
+      <div className="light light-three" />
+      <div className="mesh-grid" />
+      <div data-orbit className="orbit-ring orbit-one" />
+      <div data-orbit className="orbit-ring orbit-two" />
+    </div>
+  )
+}
+
+function HeroConsole({ total, visible, categories, featured, status }) {
+  return (
+    <aside data-hero className="hero-console">
+      <div className="console-header">
+        <div>
+          <p className="text-xs uppercase tracking-[0.36em] text-porcelain/38">live index</p>
+          <p className="mt-2 text-2xl font-semibold text-porcelain">{visible} outils affiches</p>
+        </div>
+        <span className="console-badge">
+          <Database size={18} />
+        </span>
+      </div>
+
+      <div className="metric-grid">
+        <Metric value={total} label="references" />
+        <Metric value={categories} label="familles" />
+        <Metric value={featured} label="favoris" />
+      </div>
+
+      <div className="signal-card">
+        <ShieldCheck size={18} />
+        <div>
+          <p>Supabase</p>
+          <span>{status || 'connexion en cours'}</span>
+        </div>
+      </div>
+    </aside>
+  )
+}
+
+function Metric({ value, label }) {
+  return (
+    <div className="metric-card" data-hero>
+      <p>{value}</p>
+      <span>{label}</span>
+    </div>
   )
 }
 
@@ -392,39 +434,39 @@ function AdminPanel({ onAddTool }) {
         is_featured: form.is_featured,
       })
       setForm(emptyForm)
-      setMessage('Outil ajoute avec succes.')
+      setMessage('Ajoute au catalogue.')
     } catch (error) {
-      setMessage(error.message || 'Impossible d ajouter cet outil.')
+      setMessage(error.message || 'Ajout impossible.')
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <section id="admin" className="admin-panel mb-8">
-      <div>
-        <p className="text-sm font-medium text-cyan">Admin</p>
-        <h2 className="mt-2 text-3xl font-semibold text-white">Ajouter une IA gratuite</h2>
+    <section id="admin" className="admin-panel">
+      <div className="admin-intro">
+        <p>Console privee</p>
+        <h3>Nouveau signal a indexer.</h3>
       </div>
 
-      <form className="mt-6 grid gap-4 lg:grid-cols-2" onSubmit={submitTool}>
-        <TextInput label="Nom" value={form.name} onChange={(value) => updateField('name', value)} required />
-        <TextInput label="Categorie" value={form.category} onChange={(value) => updateField('category', value)} required />
-        <TextInput label="URL" type="url" value={form.url} onChange={(value) => updateField('url', value)} required />
+      <form className="admin-form" onSubmit={submitTool}>
+        <TextInput label="Nom public" value={form.name} onChange={(value) => updateField('name', value)} required />
+        <TextInput label="Famille" value={form.category} onChange={(value) => updateField('category', value)} required />
+        <TextInput label="Adresse" type="url" value={form.url} onChange={(value) => updateField('url', value)} required />
         <TextInput
-          label="Note gratuite"
+          label="Mode gratuit"
           value={form.pricing_note}
           onChange={(value) => updateField('pricing_note', value)}
         />
         <TextInput
-          label="Description courte"
+          label="Phrase de selection"
           value={form.tagline}
           onChange={(value) => updateField('tagline', value)}
           required
           wide
         />
         <TextInput
-          label="Tags separes par virgules"
+          label="Tags, separes par virgules"
           value={form.tags}
           onChange={(value) => updateField('tags', value)}
           wide
@@ -435,13 +477,13 @@ function AdminPanel({ onAddTool }) {
             onChange={(event) => updateField('is_featured', event.target.checked)}
             type="checkbox"
           />
-          Marquer comme favori
+          Mettre en avant dans la selection
         </label>
-        <button className="primary-link justify-center" disabled={saving} type="submit">
-          <Plus size={16} /> {saving ? 'Ajout...' : 'Ajouter'}
+        <button className="solid-button justify-center" disabled={saving} type="submit">
+          <Plus size={16} /> {saving ? 'Publication...' : 'Publier'}
         </button>
       </form>
-      {message && <p className="mt-4 text-sm text-white/65">{message}</p>}
+      {message && <p className="admin-message">{message}</p>}
     </section>
   )
 }
@@ -460,41 +502,32 @@ function TextInput({ label, value, onChange, type = 'text', required = false, wi
   )
 }
 
-function Stat({ value, label }) {
+function ToolCard({ tool, index }) {
   return (
-    <div data-stat className="stat-tile">
-      <p className="text-3xl font-semibold text-white">{value}</p>
-      <p className="mt-1 text-sm text-white/[0.45]">{label}</p>
-    </div>
-  )
-}
-
-function ToolCard({ tool }) {
-  return (
-    <article data-tool-card className="tool-card">
-      <div className="flex items-start justify-between gap-4">
+    <article data-tool-card className={index === 0 ? 'tool-card tool-card-featured' : 'tool-card'}>
+      <div className="flex items-start justify-between gap-5">
         <div>
-          <p className="text-sm font-medium text-cyan">{tool.category}</p>
-          <h2 className="mt-2 text-2xl font-semibold text-white">{tool.name}</h2>
+          <p className="tool-category">{tool.category}</p>
+          <h3>{tool.name}</h3>
         </div>
         {tool.is_featured && (
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-lime text-cloud shadow-glow" title="Favori">
+          <span className="featured-mark" title="Selection">
             <Check size={16} />
           </span>
         )}
       </div>
-      <p className="mt-5 min-h-14 text-sm leading-6 text-white/[0.58]">{tool.tagline}</p>
-      <div className="mt-5 flex flex-wrap gap-2">
+      <p className="tool-copy">{tool.tagline}</p>
+      <div className="tag-row">
         {(tool.tags ?? []).map((tag) => (
           <span key={tag} className="tag">
             {tag}
           </span>
         ))}
       </div>
-      <div className="mt-7 flex items-center justify-between gap-4 border-t border-white/10 pt-5">
-        <span className="text-sm text-white/[0.45]">{tool.pricing_note}</span>
-        <a className="visit-link" href={tool.url} target="_blank" rel="noreferrer">
-          Ouvrir <ArrowUpRight size={16} />
+      <div className="tool-footer">
+        <span>{tool.pricing_note}</span>
+        <a href={tool.url} target="_blank" rel="noreferrer">
+          Visiter <ArrowUpRight size={16} />
         </a>
       </div>
     </article>

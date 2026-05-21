@@ -4,19 +4,19 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['Manrope', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['Instrument Serif', 'ui-serif', 'serif'],
       },
       colors: {
-        ink: '#eef2ff',
-        cloud: '#070812',
-        violet: '#8b5cf6',
-        cyan: '#22d3ee',
-        rose: '#fb7185',
-        lime: '#bef264',
+        obsidian: '#090907',
+        porcelain: '#f2eeda',
+        acid: '#d7ff45',
+        copper: '#c87941',
+        graphite: '#151712',
       },
       boxShadow: {
-        glow: '0 24px 90px rgba(34, 211, 238, 0.16)',
-        violet: '0 24px 100px rgba(139, 92, 246, 0.22)',
+        acid: '0 26px 90px rgba(215, 255, 69, 0.18)',
+        luxury: '0 30px 110px rgba(0, 0, 0, 0.42)',
       },
     },
   },
