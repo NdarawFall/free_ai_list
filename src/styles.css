@@ -6,7 +6,6 @@
 
 @layer base {
   :root {
-    /* Light Mode */
     --bg: #ffffff;
     --fg: #0f172a;
     --accent: #2563eb;
@@ -15,7 +14,6 @@
     --card: #f8fafc;
   }
   .dark {
-    /* Dark Mode */
     --bg: #020617;
     --fg: #f1f5f9;
     --accent: #3b82f6;
@@ -25,38 +23,55 @@
   }
 
   body {
-    @apply bg-[var(--bg)] text-[var(--fg)] font-[Inter] transition-colors duration-300;
+    @apply bg-[var(--bg)] text-[var(--fg)] font-[Inter] transition-colors duration-300 min-h-screen;
   }
 }
 
 @layer components {
-  /* Container & Grid */
+  /* Layout & Spacing */
   .layout-container {
     @apply mx-auto max-w-[1200px] px-6 sm:px-8;
   }
 
-  /* Navbar */
+  /* Navigation */
   .navbar {
-    @apply fixed top-4 left-4 right-4 z-50 flex items-center justify-between p-4 rounded-2xl border border-[var(--border)] shadow-sm;
-    background: var(--bg);
-    backdrop-filter: blur(8px);
+    @apply fixed top-4 left-4 right-4 z-50 flex items-center justify-between p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg)]/90 backdrop-blur-md shadow-sm;
   }
 
-  /* Cards */
+  /* Cards - Enhanced Depth */
   .card {
-    @apply p-8 rounded-3xl border border-[var(--border)] bg-[var(--card)] shadow-sm;
+    @apply p-10 rounded-[32px] border border-[var(--border)] bg-[var(--card)] shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-2;
+  }
+
+  /* Typography Refinement */
+  .heading-xl {
+    @apply text-6xl sm:text-8xl font-extrabold tracking-tighter leading-[0.9] mb-8;
+  }
+
+  .heading-lg {
+    @apply text-3xl sm:text-4xl font-bold tracking-tight mb-6;
+  }
+
+  .text-body {
+    @apply text-lg text-[var(--muted)] leading-relaxed;
   }
 
   /* Buttons */
   .btn-main {
-    @apply px-6 py-3 rounded-xl font-bold text-sm bg-[var(--accent)] text-white hover:opacity-90 transition-all;
-  }
-  .btn-outline {
-    @apply px-6 py-3 rounded-xl font-bold text-sm border border-[var(--border)] hover:bg-[var(--card)] transition-all;
+    @apply px-8 py-4 rounded-2xl font-bold text-sm bg-[var(--accent)] text-white hover:opacity-90 transition-all hover:scale-[1.02] active:scale-95;
   }
 
-  /* Footer */
+  .btn-outline {
+    @apply px-8 py-4 rounded-2xl font-bold text-sm border border-[var(--border)] hover:bg-[var(--card)] transition-all;
+  }
+
+  /* Footer - Refined Spacing */
   .footer-row {
-    @apply border-t border-[var(--border)] pt-8 mt-16 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-bold text-[var(--muted)];
+    @apply border-t border-[var(--border)] py-16 mt-24 flex flex-col md:flex-row justify-between items-center gap-6 text-xs font-bold text-[var(--muted)];
+  }
+
+  /* Section Styling */
+  .section-pad {
+    @apply py-24;
   }
 }

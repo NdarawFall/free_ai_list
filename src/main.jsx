@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createClient } from '@supabase/supabase-js'
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom'
-import { Zap, Terminal, BookOpen, Plus, Sun, Moon, LogOut } from 'lucide-react'
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
+import { Zap, Terminal, BookOpen, Plus, Sun, Moon, LogOut, ArrowRight, ShieldCheck, Cpu } from 'lucide-react'
 import './styles.css'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://xnilbpzflfsimnkqxmog.supabase.co'
@@ -28,11 +28,12 @@ function App() {
   }, [])
 
   const isAdmin = session?.user?.email?.toLowerCase() === ADMIN_EMAIL
+  const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light')
 
   return (
     <Router>
-      <Navbar isAdmin={isAdmin} session={session} theme={theme} toggleTheme={() => setTheme(prev => prev === 'light' ? 'dark' : 'light')} />
-      <main className="layout-container py-32">
+      <Navbar isAdmin={isAdmin} session={session} theme={theme} toggleTheme={toggleTheme} />
+      <main className="layout-container">
         <Routes>
           <Route path="/" element={<Accueil />} />
           <Route path="/ai" element={<AiTools tools={tools} />} />
@@ -50,15 +51,17 @@ function App() {
 function Navbar({ isAdmin, session, theme, toggleTheme }) {
   return (
     <nav className="navbar">
-      <Link to="/" className="text-lg font-extrabold tracking-tight">Free AI Atlas</Link>
-      <div className="flex items-center gap-2">
-        <Link to="/ai" className="px-4 py-2 text-sm font-bold">IA</Link>
-        <Link to="/tools" className="px-4 py-2 text-sm font-bold text-[var(--muted)]">Outils</Link>
-        <Link to="/prompts" className="px-4 py-2 text-sm font-bold text-[var(--muted)]">Prompts</Link>
-        <Link to="/blog" className="px-4 py-2 text-sm font-bold text-[var(--muted)]">Blog</Link>
+      <Link to="/" className="text-xl font-black tracking-tighter">Free AI Atlas</Link>
+      <div className="flex items-center gap-1">
+        {[
+          { path: '/ai', label: 'AI' },
+          { path: '/tools', label: 'Outils' },
+          { path: '/prompts', label: 'Prompts' },
+          { path: '/blog', label: 'Blog' }
+        ].map(l => <Link key={l.path} to={l.path} className="px-4 py-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--fg)]">{l.label}</Link>)}
         {isAdmin && <Link to="/admin" className="btn-main text-xs">Ajouter IA</Link>}
-        <button onClick={toggleTheme} className="p-2">{theme === 'light' ? <Moon size={18}/> : <Sun size={18}/>}</button>
-        {session ? <button onClick={() => supabase.auth.signOut()}><LogOut size={18}/></button> : <button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })} className="btn-main text-xs">Connexion</button>}
+        <button onClick={toggleTheme} className="p-2 text-[var(--muted)]">{theme === 'light' ? <Moon size={18}/> : <Sun size={18}/>}</button>
+        {session ? <button onClick={() => supabase.auth.signOut()} className="px-4 py-2 text-sm font-bold">Déconnexion</button> : <button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })} className="btn-main text-xs">Connexion</button>}
       </div>
     </nav>
   )
@@ -66,25 +69,40 @@ function Navbar({ isAdmin, session, theme, toggleTheme }) {
 
 function Accueil() {
   return (
-    <div className="space-y-24">
-      <section className="text-center">
-        <h1 className="text-6xl font-black tracking-tighter mb-6">L'accès à l'IA ne devrait pas <br/> être une question de portefeuille.</h1>
-        <p className="text-body max-w-2xl mx-auto mb-10">J'ai testé et répertorié les meilleurs outils IA gratuits pour vous permettre de produire du contenu professionnel sans dépenser un euro en abonnements.</p>
-        <Link to="/ai" className="btn-main">Explorer les outils</Link>
+    <div className="space-y-32">
+      <section className="section-pad text-center">
+        <h1 className="heading-hero">Dominez la création<br/>sans budget.</h1>
+        <p className="text-body max-w-2xl mx-auto mb-10">J'ai testé et répertorié les meilleurs outils IA gratuits pour vous permettre de produire du contenu professionnel sans dépenser un euro en abonnements. Ne laissez plus votre portefeuille limiter votre créativité.</p>
+        <div className="flex gap-4 justify-center">
+            <Link to="/ai" className="btn-main">Explorer les IA</Link>
+        </div>
       </section>
       
-      <section className="grid md:grid-cols-3 gap-8">
-        <div className="card"><h3 className="font-bold mb-2">Qualité Pro</h3><p className="text-body">Des modèles gratuits, mais puissants.</p></div>
-        <div className="card"><h3 className="font-bold mb-2">Prompts Testés</h3><p className="text-body">Les commandes exactes pour réussir.</p></div>
-        <div className="card"><h3 className="font-bold mb-2">Faceless Mastery</h3><p className="text-body">Tout pour créer du contenu anonyme.</p></div>
+      <section className="grid md:grid-cols-2 gap-8">
+        <div className="card">
+            <h2 className="heading-lg">Pourquoi payer ?</h2>
+            <p className="text-body">Les créateurs débutants, surtout ceux avec un petit budget, n'ont pas besoin de payer des abonnements coûteux. Il existe des alternatives gratuites puissantes.</p>
+        </div>
+        <div className="card">
+            <h2 className="heading-lg">L'art du Prompting</h2>
+            <p className="text-body">L'outil n'est que la moitié du travail. La vraie valeur réside dans comment vous lui parlez. Je vous livre mes meilleurs prompts pour des résultats pro.</p>
+        </div>
+      </section>
+      
+      <section className="card bg-[var(--accent)] text-white">
+          <h2 className="heading-section text-white">Prêt à transformer votre workflow ?</h2>
+          <p className="text-body text-white/80 mb-8">Rejoignez la communauté des créateurs qui ont choisi l'intelligence sans contraintes financières.</p>
+          <Link to="/ai" className="btn-outline text-white border-white/20">Voir les outils</Link>
       </section>
     </div>
   )
 }
 
-function AiTools({ tools }) {
+function ToolDirectory({ tools }) {
   return (
-    <div className="grid md:grid-cols-3 gap-8">
+    <div className="section-pad">
+      <h1 className="heading-section">Atlas IA</h1>
+      <div className="grid md:grid-cols-3 gap-8 py-12">
         {tools.map(tool => (
             <div key={tool.id} className="card">
                 <h3 className="text-xl font-bold mb-2">{tool.name}</h3>
@@ -92,6 +110,7 @@ function AiTools({ tools }) {
                 <a href={tool.url} className="text-[var(--accent)] font-bold text-sm">Voir l'outil →</a>
             </div>
         ))}
+      </div>
     </div>
   )
 }
@@ -105,11 +124,11 @@ function AdminView({ onAdd }) {
     if (data) { onAdd(data); navigate('/ai'); }
   }
   return (
-    <div className="card max-w-xl mx-auto">
-        <h2 className="text-2xl font-black mb-6">Ajouter un outil</h2>
+    <div className="card max-w-xl mx-auto section-pad">
+        <h2 className="heading-lg">Ajouter un outil</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
             <input className="master-field" placeholder="Nom" onChange={e => setForm({...form, name: e.target.value})} required />
-            <input className="master-field" placeholder="Tagline" onChange={e => setForm({...form, tagline: e.target.value})} required />
+            <input className="master-field" placeholder="Accroche" onChange={e => setForm({...form, tagline: e.target.value})} required />
             <input className="master-field" placeholder="URL" onChange={e => setForm({...form, url: e.target.value})} required />
             <button className="btn-main w-full">Enregistrer</button>
         </form>
@@ -118,7 +137,7 @@ function AdminView({ onAdd }) {
 }
 
 function ComingSoon() {
-  return <div className="text-center py-24"><h2 className="text-2xl font-black">Curation en cours</h2><p className="text-body">Un peu de patience, cette section sera bientôt disponible.</p></div>
+  return <div className="text-center section-pad"><h2 className="heading-section">Section en cours</h2><p className="text-body">Nous travaillons sur l'ajout des meilleurs prompts et outils de création.</p></div>
 }
 
 function Footer() {
