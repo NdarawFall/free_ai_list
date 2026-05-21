@@ -223,7 +223,7 @@ function App() {
 
   return (
     <main className="site-shell">
-      <BackgroundStage />
+
 
       <section ref={heroRef} className="relative z-10 border-b border-porcelain/10">
         <div className="mx-auto grid min-h-[88vh] max-w-[1440px] content-between px-5 py-6 sm:px-8 lg:px-12">

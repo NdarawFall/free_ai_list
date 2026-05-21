@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -21,37 +21,17 @@
     @apply relative min-h-screen overflow-hidden bg-obsidian text-porcelain;
   }
 
-  .background-stage {
-    @apply pointer-events-none fixed inset-0 z-0 overflow-hidden;
-    background:
-      radial-gradient(circle at 50% 0%, rgba(242, 238, 218, 0.08), transparent 30%),
-      linear-gradient(180deg, #090907 0%, #0f1110 54%, #090907 100%);
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: url('/src/anonymus.jpg') center/cover no-repeat;
+    opacity: 0.25;
+    filter: blur(8px);
+    z-index: -1;
   }
 
-  .light {
-    @apply absolute rounded-full blur-3xl;
-    animation: driftLight 18s ease-in-out infinite alternate;
-  }
-
-  .light-one {
-    @apply h-[36rem] w-[36rem] bg-acid/[0.18];
-    right: -12rem;
-    top: -10rem;
-  }
-
-  .light-two {
-    @apply h-[30rem] w-[30rem] bg-copper/[0.18];
-    bottom: 4rem;
-    left: -10rem;
-    animation-delay: -7s;
-  }
-
-  .light-three {
-    @apply h-[26rem] w-[26rem] bg-porcelain/[0.08];
-    left: 42%;
-    top: 36%;
-    animation-delay: -12s;
-  }
+  /* old light effects removed */
 
   .mesh-grid {
     @apply absolute inset-0 opacity-[0.08];
@@ -90,7 +70,7 @@
   }
 
   .ghost-button {
-    @apply inline-flex h-11 items-center gap-2 border border-porcelain/[0.15] bg-porcelain/[0.055] px-4 text-sm font-semibold text-porcelain/[0.76] backdrop-blur-xl transition hover:border-acid/50 hover:bg-acid/10 hover:text-porcelain;
+    @apply inline-flex h-11 items-center gap-2 border border-primary/15 bg-primary/5 px-4 text-sm font-semibold text-primary/76 backdrop-blur-xl transition hover:border-accent/50 hover:bg-accent/10 hover:text-accent;
   }
 
   .editorial-kicker {
@@ -112,7 +92,7 @@
   }
 
   .solid-button {
-    @apply bg-acid text-obsidian shadow-acid hover:-translate-y-0.5 hover:bg-porcelain;
+    @apply bg-primary text-surface shadow-acid hover:-translate-y-0.5 hover:bg-accent;
   }
 
   .solid-button:disabled {
@@ -212,7 +192,7 @@
   }
 
   .tool-card {
-    @apply min-h-[21rem] border border-porcelain/10 bg-porcelain/[0.055] p-5 backdrop-blur-xl transition duration-300 hover:z-10 hover:-translate-y-1 hover:border-acid/50 hover:bg-porcelain/[0.085] hover:shadow-luxury;
+    @apply min-h-[21rem] border border-primary/10 glass p-5 transition duration-300 hover:z-10 hover:-translate-y-1 hover:border-accent/50 hover:shadow-luxury;
   }
 
   .tool-card-featured {
@@ -290,6 +270,11 @@
   .admin-message {
     @apply mt-4 text-sm font-semibold text-acid;
   }
+}
+
+/* Glass‑morphism utility */
+.glass {
+  @apply bg-surface/30 backdrop-blur-lg border border-primary/20;
 }
 
 @keyframes driftLight {
