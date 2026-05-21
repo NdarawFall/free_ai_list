@@ -70,7 +70,7 @@
   }
 
   .ghost-button {
-    @apply inline-flex h-11 items-center gap-2 border border-primary/15 bg-primary/5 px-4 text-sm font-semibold text-primary/76 backdrop-blur-xl transition hover:border-accent/50 hover:bg-accent/10 hover:text-accent;
+    @apply inline-flex h-11 items-center gap-2 border border-primary/[0.15] bg-primary/5 px-4 text-sm font-semibold text-primary/[0.76] backdrop-blur-xl transition hover:border-accent/50 hover:bg-accent/10 hover:text-accent;
   }
 
   .editorial-kicker {

@@ -8,12 +8,16 @@ export default {
         display: ['Playfair Display', 'ui-serif', 'serif'],
       },
       colors: {
-        primary: '#0f172a', // slate-900
-        surface: '#1e293b', // slate-800
-        accent: '#14b8a6', // teal-500
-        muted: '#64748b', // slate-500
-        text: '#f1f5f9', // slate-100
-        background: '#0f172a',
+        obsidian: '#090907',
+        porcelain: '#F2EEDA',
+        acid: '#BCFF00',
+        copper: '#C67D3D',
+        primary: '#0f172a',
+        surface: '#1e293b',
+        accent: '#BCFF00', // Aligning accent with acid as it's often used interchangeably in the CSS
+        muted: '#64748b',
+        text: '#f1f5f9',
+        background: '#090907',
       },
       boxShadow: {
         acid: '0 26px 90px rgba(21, 94, 117, 0.18)',
