@@ -8,7 +8,10 @@ import {
   Command,
   Search,
   Sparkles,
-  ArrowRight,
+  ChevronRight,
+  ShieldCheck,
+  Globe,
+  Layout,
 } from 'lucide-react'
 import './styles.css'
 
@@ -18,17 +21,15 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://xnilbpzflfsimn
 const supabaseAnonKey =
   import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_M7ILY-6b_MRYuu4l3BXLOA_TQEPKTyA'
 const hasSupabaseConfig = Boolean(supabaseUrl && supabaseAnonKey)
-const ADMIN_EMAIL = 'ndarawpro@gmail.com'
-const productionUrl = 'https://freeailist-navy.vercel.app'
 
 const supabase = hasSupabaseConfig ? createClient(supabaseUrl, supabaseAnonKey) : null
 
 const fallbackTools = [
-  { id: 'chatgpt', name: 'ChatGPT', tagline: 'A multi-modal intelligence for expansive creativity and problem solving.', category: 'Assistant', url: 'https://chatgpt.com', pricing_note: 'Free Tier', tags: ['text', 'code'], is_featured: true },
-  { id: 'claude', name: 'Claude', tagline: 'The nuanced conversationalist, designed for precision and logical clarity.', category: 'Assistant', url: 'https://claude.ai', pricing_note: 'Free Tier', tags: ['text', 'analysis'], is_featured: true },
-  { id: 'perplexity', name: 'Perplexity', tagline: 'Direct answers sourced from the living web. Truth in real-time.', category: 'Search', url: 'https://www.perplexity.ai', pricing_note: 'Free Tier', tags: ['search'], is_featured: true },
-  { id: 'ideogram', name: 'Ideogram', tagline: 'Graphic design autonomy through advanced typographic synthesis.', category: 'Visuals', url: 'https://ideogram.ai', pricing_note: 'Credits', tags: ['image'], is_featured: true },
-  { id: 'mistral', name: 'Mistral Pi', tagline: 'Efficient, open-weight intelligence for the decentralized future.', category: 'Developer', url: 'https://mistral.ai', pricing_note: 'Free API', tags: ['api'], is_featured: false },
+  { id: 'chatgpt', name: 'ChatGPT', tagline: 'The worlds most capable and versatile conversational intelligence.', category: 'Assistant', url: 'https://chatgpt.com', pricing_note: 'Free Plan', tags: ['text', 'logic'], is_featured: true },
+  { id: 'claude', name: 'Claude', tagline: 'A sophisticated assistant focused on safety, precision, and reasoning.', category: 'Assistant', url: 'https://claude.ai', pricing_note: 'Free Plan', tags: ['analysis', 'writing'], is_featured: true },
+  { id: 'perplexity', name: 'Perplexity', tagline: 'A research engine that provides direct, cited answers from the live web.', category: 'Research', url: 'https://www.perplexity.ai', pricing_note: 'Free Plan', tags: ['search', 'data'], is_featured: true },
+  { id: 'ideogram', name: 'Ideogram', tagline: 'Advanced image generation with industry-leading typography rendering.', category: 'Design', url: 'https://ideogram.ai', pricing_note: 'Credits', tags: ['visuals', 'design'], is_featured: true },
+  { id: 'google-studio', name: 'AI Studio', tagline: 'Fast, flexible playground for prototyping with the latest Gemini models.', category: 'Dev', url: 'https://aistudio.google.com', pricing_note: 'Free', tags: ['api', 'models'], is_featured: false },
 ]
 
 function App() {
@@ -36,46 +37,48 @@ function App() {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('All')
   const [loading, setLoading] = useState(hasSupabaseConfig)
-  const [session, setSession] = useState(null)
   
   const mainRef = useRef(null)
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.from('.reveal-item', {
-        y: 60,
+      // Hero Entrance
+      const tl = gsap.timeline()
+      tl.from('.animate-text', {
+        y: 80,
         opacity: 0,
-        duration: 1.2,
+        duration: 1.4,
         stagger: 0.1,
-        ease: 'power3.out'
+        ease: 'expo.out'
       })
-      
-      gsap.from('.tool-row', {
-        scrollTrigger: {
-          trigger: '.tool-list',
-          start: 'top 80%',
-        },
+      tl.from('.animate-fade', {
         opacity: 0,
-        y: 40,
         duration: 1,
-        stagger: 0.05,
         ease: 'power2.out'
+      }, '-=0.8')
+
+      // Scroll reveals
+      gsap.utils.toArray('.apple-card').forEach((card, i) => {
+        gsap.from(card, {
+          scrollTrigger: {
+            trigger: card,
+            start: 'top 90%',
+          },
+          y: 60,
+          opacity: 0,
+          duration: 1.2,
+          ease: 'expo.out',
+          delay: (i % 3) * 0.1
+        })
       })
     }, mainRef)
     return () => ctx.revert()
   }, [tools])
 
   useEffect(() => {
-    if (!supabase) return
-    supabase.auth.getSession().then(({ data }) => setSession(data.session))
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
-    return () => subscription.unsubscribe()
-  }, [])
-
-  useEffect(() => {
     async function loadTools() {
       if (!supabase) { setLoading(false); return; }
-      const { data, error } = await supabase.from('ai_tools').select('*').order('name', { ascending: true })
+      const { data, error } = await supabase.from('ai_tools').select('*').order('is_featured', { ascending: false }).order('name', { ascending: true })
       if (!error && data?.length) setTools(data)
       setLoading(false)
     }
@@ -95,120 +98,145 @@ function App() {
   }, [category, query, tools])
 
   return (
-    <div ref={mainRef} className="min-h-screen">
-      <div className="site-border" />
-      <div className="background-asset" />
+    <div ref={mainRef} className="min-h-screen bg-[#f5f5f7]">
+      <div className="blur-overlay">
+        <div className="blur-circle h-[600px] w-[600px] -top-48 -left-48" />
+        <div className="blur-circle h-[500px] w-[500px] top-1/2 -right-24 bg-blue-400/10" />
+      </div>
 
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-[100] px-6 sm:px-12 lg:px-20 py-8 mix-blend-difference text-white">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-             <Command size={18} />
-             <span className="text-[10px] font-bold uppercase tracking-[0.4em]">Atlas Index</span>
-          </div>
-          <div className="flex gap-8 text-[10px] font-bold uppercase tracking-[0.3em]">
-             <a href="#directory" className="hover:line-through">Directory</a>
-             {session ? (
-               <button onClick={() => supabase.auth.signOut()}>Logout</button>
-             ) : (
-               <button onClick={() => {}}>Access</button>
-             )}
-          </div>
+      {/* Nav */}
+      <nav className="nav-glass px-6 sm:px-12 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+           <Command size={20} className="text-[#1d1d1f]" />
+           <span className="text-[14px] font-bold tracking-tight">Atlas</span>
+        </div>
+        <div className="flex items-center gap-8 text-[12px] font-semibold text-[#1d1d1f]/80">
+          <a href="#directory" className="hover:text-[#0071e3] transition-colors">Directory</a>
+          <a href="#" className="hover:text-[#0071e3] transition-colors">About</a>
+          <button className="h-7 px-3 bg-[#1d1d1f] text-white rounded-full text-[11px] font-bold">Access</button>
         </div>
       </nav>
 
-      <main className="main-container">
-        {/* Header Section */}
-        <section className="min-h-[90vh] flex flex-col justify-center section-padding">
-           <div className="editorial-header">
-              <div className="reveal-item flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.3em] text-neutral-400">
-                 <Sparkles size={12} /> The New Standard in AI Curation
-              </div>
-              <h1 className="reveal-item text-7xl sm:text-8xl lg:text-[10rem] leading-[0.9] tracking-tight text-balance">
-                Utility over <br /> <span className="italic serif">everything.</span>
-              </h1>
-              <div className="reveal-item line-divider mt-8" />
-              <div className="reveal-item flex flex-col md:flex-row justify-between w-full gap-8">
-                 <p className="max-w-md text-lg text-neutral-500 leading-relaxed">
-                   Free AI Atlas is a surgical collection of machine intelligence. We do not index hype. We index tools that fundamentally enhance the human workflow without the tax of subscriptions.
-                 </p>
-                 <div className="flex items-end">
-                    <a href="#directory" className="btn-bespoke">
-                      Browse Index <ArrowRight size={14} className="ml-2" />
+      {/* Hero */}
+      <section className="hero-gradient pt-32 pb-24 sm:pt-48 sm:pb-32">
+        <div className="content-section text-center">
+          <div className="animate-fade mb-6 inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-[13px] font-semibold text-[#86868b] shadow-sm">
+             <Sparkles size={14} className="text-[#0071e3]" /> 
+             The curated AI repository
+          </div>
+          <h1 className="heading-1 animate-text">
+            Intelligence. <br />
+            <span className="text-[#86868b]">Without the friction.</span>
+          </h1>
+          <p className="animate-text mt-8 mx-auto max-w-2xl text-xl font-medium text-[#86868b] sm:text-2xl leading-relaxed">
+            A premium index of artificial intelligence tools that respect your time and resources. Verified, tested, and ready to deploy.
+          </p>
+          <div className="animate-fade mt-12 flex flex-wrap justify-center gap-4">
+             <a href="#directory" className="btn-apple">Explore Index</a>
+             <button className="btn-secondary">Learn more <ChevronRight size={16} /></button>
+          </div>
+        </div>
+      </section>
+
+      {/* Directory */}
+      <section id="directory" className="py-24 sm:py-32">
+        <div className="content-section">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-12 mb-24">
+             <div className="max-w-xl">
+                <h2 className="text-4xl font-bold tracking-tight text-[#1d1d1f] sm:text-5xl">Our Directory</h2>
+                <p className="mt-4 text-lg font-medium text-[#86868b]">We only index models that fundamentally enhance human output. Each entry is manually verified for quality and utility.</p>
+             </div>
+             
+             <div className="flex flex-col gap-6 w-full md:w-[450px]">
+                <div className="relative group">
+                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#86868b]" size={20} />
+                   <input 
+                     type="text" 
+                     placeholder="Search tools, tags, or features"
+                     className="search-input"
+                     value={query}
+                     onChange={(e) => setQuery(e.target.value)}
+                   />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                   {categories.map(c => (
+                     <button 
+                       key={c}
+                       onClick={() => setCategory(c)}
+                       className={`category-pill ${category === c ? 'active' : ''}`}
+                     >
+                       {c}
+                     </button>
+                   ))}
+                </div>
+             </div>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+             {filteredTools.map((tool) => (
+               <div key={tool.id} className="apple-card group">
+                  <div className="flex items-start justify-between mb-8">
+                     <div className="h-12 w-12 rounded-2xl bg-[#f5f5f7] flex items-center justify-center text-[#1d1d1f] group-hover:bg-[#0071e3] group-hover:text-white transition-colors duration-500">
+                        {tool.category === 'Assistant' ? <Layout size={24} /> : <Globe size={24} />}
+                     </div>
+                     {tool.is_featured && (
+                        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[#0071e3] bg-[#0071e3]/5 px-3 py-1 rounded-full">
+                           Featured
+                        </span>
+                     )}
+                  </div>
+                  
+                  <h3 className="text-2xl font-bold tracking-tight text-[#1d1d1f] mb-2">{tool.name}</h3>
+                  <p className="text-[15px] font-medium text-[#86868b] leading-relaxed mb-8 h-12 overflow-hidden line-clamp-2">
+                    {tool.tagline}
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-2 mb-10">
+                    {tool.tags?.map(tag => (
+                      <span key={tag} className="tag-pill">{tag}</span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-6 border-t border-black/[0.05]">
+                    <span className="text-[13px] font-semibold text-[#86868b]">{tool.pricing_note}</span>
+                    <a 
+                      href={tool.url} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f5f7] hover:bg-[#1d1d1f] hover:text-white transition-all duration-300"
+                    >
+                      <ArrowUpRight size={18} />
                     </a>
-                 </div>
-              </div>
-           </div>
-        </section>
+                  </div>
+               </div>
+             ))}
+          </div>
+          
+          {loading && (
+             <div className="mt-24 flex justify-center">
+                <div className="h-8 w-8 animate-spin border-b-2 border-[#0071e3] rounded-full" />
+             </div>
+          )}
+        </div>
+      </section>
 
-        {/* Directory Section */}
-        <section id="directory" className="section-padding border-t border-black">
-           <div className="flex flex-col gap-24">
-              <div className="flex flex-col md:flex-row justify-between items-baseline gap-12">
-                 <h2 className="text-5xl sm:text-6xl italic serif">The Directory</h2>
-                 
-                 <div className="flex flex-col gap-8 w-full md:w-[400px]">
-                    <div className="relative">
-                       <input 
-                         type="text" 
-                         placeholder="Search Index"
-                         className="input-minimal"
-                         value={query}
-                         onChange={(e) => setQuery(e.target.value)}
-                       />
-                       <Search className="absolute right-0 top-1/2 -translate-y-1/2 text-neutral-300" size={18} />
-                    </div>
-                    <div className="flex flex-wrap gap-x-6 gap-y-4">
-                       {categories.map(c => (
-                         <button 
-                           key={c}
-                           onClick={() => setCategory(c)}
-                           className={`filter-tab ${category === c ? 'active' : ''}`}
-                         >
-                           {c}
-                         </button>
-                       ))}
-                    </div>
-                 </div>
-              </div>
-
-              <div className="tool-list mt-12">
-                 {filteredTools.map((tool) => (
-                   <div key={tool.id} className="tool-row">
-                      <div className="category">{tool.category}</div>
-                      <div>
-                        <h3 className="name">{tool.name}</h3>
-                        <p className="tagline mt-2">{tool.tagline}</p>
-                      </div>
-                      <div className="flex justify-end items-center">
-                         <a 
-                           href={tool.url} 
-                           target="_blank" 
-                           rel="noreferrer" 
-                           className="flex h-14 w-14 items-center justify-center border border-black/5 hover:bg-black hover:text-white transition-all duration-500"
-                         >
-                            <ArrowUpRight size={20} />
-                         </a>
-                      </div>
-                   </div>
-                 ))}
-              </div>
-           </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="footer-minimal mt-32 flex flex-col md:flex-row justify-between gap-8">
-           <div className="flex items-center gap-4">
-              <Command size={14} />
-              <span>Free AI Atlas — Built 2026</span>
-           </div>
-           <div className="flex gap-12">
-              <a href="#" className="hover:underline">Ethics</a>
-              <a href="#" className="hover:underline">Github</a>
-              <a href="#" className="hover:underline">Privacy</a>
-           </div>
-        </footer>
-      </main>
+      {/* Footer */}
+      <footer className="py-24 border-t border-black/[0.05]">
+        <div className="content-section flex flex-col md:flex-row justify-between items-center gap-12">
+          <div className="flex items-center gap-3">
+             <div className="h-8 w-8 rounded-lg bg-[#1d1d1f] flex items-center justify-center text-white"><Command size={16} /></div>
+             <span className="text-[14px] font-bold tracking-tight">Free AI Atlas</span>
+          </div>
+          <div className="flex gap-12 text-[13px] font-medium text-[#86868b]">
+             <a href="#" className="hover:text-[#1d1d1f] transition-colors">Privacy</a>
+             <a href="#" className="hover:text-[#1d1d1f] transition-colors">Ethics</a>
+             <a href="#" className="hover:text-[#1d1d1f] transition-colors">Github</a>
+          </div>
+          <div className="text-[13px] font-medium text-[#86868b]">
+            © 2026 Apple-grade quality
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
