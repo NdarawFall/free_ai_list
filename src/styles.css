@@ -11,16 +11,33 @@
     --nexus-blue: #0071e3;
     --nexus-muted: #86868b;
     --nexus-border: rgba(0, 0, 0, 0.08);
+    --nexus-nav-bg: rgba(255, 255, 255, 0.6);
+    --nexus-card-bg: #ffffff;
+    --nexus-glow-opacity: 0.15;
+  }
+
+  .dark {
+    --nexus-bg: #020617;
+    --nexus-fg: #f5f5f7;
+    --nexus-blue: #3b82f6;
+    --nexus-muted: #94a3b8;
+    --nexus-border: rgba(255, 255, 255, 0.08);
+    --nexus-nav-bg: rgba(15, 23, 42, 0.6);
+    --nexus-card-bg: rgba(30, 41, 59, 0.5);
+    --nexus-glow-opacity: 0.25;
   }
 
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     background: var(--nexus-bg);
+    color: var(--nexus-fg);
   }
 
   body {
-    @apply bg-[#f5f5f7] text-[#1d1d1f] antialiased;
+    @apply antialiased transition-colors duration-500;
+    background: var(--nexus-bg);
+    color: var(--nexus-fg);
     font-family: 'Inter', system-ui, sans-serif;
   }
 }
@@ -33,82 +50,76 @@
 
   /* Floating Pill Navbar */
   .nexus-nav {
-    @apply fixed top-6 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 h-14 px-5 rounded-full border border-black/[0.05] bg-white/60 backdrop-blur-3xl shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-all duration-500 min-w-max;
+    @apply fixed top-6 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 h-14 px-5 rounded-full border border-[var(--nexus-border)] transition-all duration-500 min-w-max shadow-2xl;
+    background: var(--nexus-nav-bg);
+    backdrop-filter: blur(24px);
   }
 
-  /* Background Grain & Orbs */
-  .nexus-bg {
-    @apply fixed inset-0 -z-10 pointer-events-none bg-white;
-  }
-
-  .nexus-bg::after {
-    content: "";
-    @apply absolute inset-0 opacity-[0.05];
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  }
-
+  /* Background Glows */
   .glow-nexus {
-    @apply absolute rounded-full blur-[120px] opacity-[0.15];
-    animation: drift 20s infinite alternate ease-in-out;
+    @apply absolute rounded-full blur-[120px];
+    opacity: var(--nexus-glow-opacity);
+    animation: drift 25s infinite alternate ease-in-out;
   }
 
   @keyframes drift {
     0% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(5vw, 10vh) scale(1.1); }
-    100% { transform: translate(-5vw, 5vh) scale(0.9); }
+    50% { transform: translate(10vw, 15vh) scale(1.2); }
+    100% { transform: translate(-10vw, 5vh) scale(0.9); }
   }
 
   /* Cards */
   .nexus-card {
-    @apply relative overflow-hidden rounded-[40px] border border-black/[0.05] bg-white p-8 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-[0_4px_24px_rgba(0,0,0,0.02)];
+    @apply relative overflow-hidden rounded-[40px] border border-[var(--nexus-border)] transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-xl;
+    background: var(--nexus-card-bg);
   }
 
   .nexus-card:hover {
-    @apply border-blue-500/20 -translate-y-2 shadow-[0_32px_64px_rgba(0,0,0,0.06)];
+    @apply -translate-y-2;
+    border-color: var(--nexus-blue);
+    box-shadow: 0 32px 64px rgba(0, 0, 0, 0.1);
   }
 
-  .blog-card {
-    @apply relative p-8 rounded-[40px] border border-black/[0.03] bg-white transition-all duration-700 overflow-hidden hover:shadow-2xl hover:-translate-y-1;
-  }
-
-  /* Official Google Button */
-  .google-btn {
-    @apply flex items-center gap-3 bg-white px-5 h-10 rounded-full text-sm font-bold text-slate-900 border border-black/5 transition-all hover:bg-slate-50 hover:shadow-lg active:scale-95;
+  /* Theme Switcher Button */
+  .theme-switch {
+    @apply flex items-center justify-center h-10 w-10 rounded-full border border-[var(--nexus-border)] bg-white/5 hover:bg-white/10 transition-all text-[var(--nexus-fg)];
   }
 
   /* Inputs */
   .nexus-search {
-    @apply h-12 w-full rounded-2xl bg-black/[0.03] border border-black/[0.05] px-12 text-sm font-medium text-black outline-none transition-all duration-300 focus:bg-white focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5;
+    @apply h-12 w-full rounded-2xl border border-[var(--nexus-border)] px-12 text-sm font-medium outline-none transition-all duration-300;
+    background: rgba(0, 0, 0, 0.03);
+    color: var(--nexus-fg);
+  }
+  .dark .nexus-search {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .nexus-search:focus {
+    @apply ring-4;
+    border-color: var(--nexus-blue);
+    ring-color: var(--nexus-blue);
   }
 
   .nexus-pill {
-    @apply px-5 py-2 rounded-full text-[13px] font-semibold text-slate-500 border border-black/[0.05] transition-all duration-300;
+    @apply px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest border border-[var(--nexus-border)] transition-all duration-300;
+    color: var(--nexus-muted);
   }
 
   .nexus-pill.active {
     @apply bg-black text-white border-black;
   }
-
-  /* Admin Suite */
-  .nexus-dashboard {
-    @apply p-8 sm:p-12 rounded-[40px] border border-black/[0.05] bg-white shadow-xl;
-  }
-
-  .nexus-input-group {
-    @apply flex flex-col gap-2;
-  }
-
-  .nexus-label {
-    @apply text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 ml-4;
-  }
-
-  .nexus-field {
-    @apply h-12 w-full rounded-xl bg-black/[0.03] border border-black/[0.05] px-4 text-sm text-black outline-none transition-all focus:border-blue-500 focus:bg-white;
+  .dark .nexus-pill.active {
+    @apply bg-white text-black border-white;
   }
 
   /* Typography */
   .nexus-h1 {
-    @apply text-5xl font-black tracking-tight sm:text-7xl lg:text-[90px] leading-[1] text-[#1d1d1f];
+    @apply text-6xl sm:text-9xl font-black tracking-tighter leading-[0.9];
+    color: var(--nexus-fg);
+  }
+
+  .text-gradient-blue {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500;
   }
 
   .animate-fade {
@@ -116,29 +127,8 @@
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Cinematic Loader */
-  .cinematic-loader {
-    @apply fixed inset-0 z-[2000] bg-white flex flex-col items-center justify-center text-center px-6;
-  }
-
-  .loader-text-sequence {
-    @apply text-2xl sm:text-4xl font-black tracking-tighter uppercase italic overflow-hidden h-12 sm:h-16;
-  }
-
-  .loader-word {
-    @apply block transition-transform duration-500 ease-in-out;
-  }
-
-  .blog-image-placeholder {
-    @apply w-full h-48 bg-slate-50 rounded-3xl mb-6 flex items-center justify-center text-slate-300;
-  }
-
-  .text-gradient-blue {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-cyan-500;
   }
 }
 
@@ -149,6 +139,6 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d1d1d6;
+  background: var(--nexus-muted);
   border-radius: 10px;
 }
