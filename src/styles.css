@@ -37,7 +37,9 @@
 
   /* Navbar */
   .navbar {
-    @apply fixed top-4 left-4 right-4 z-50 flex items-center justify-between p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur-md shadow-sm;
+    @apply fixed top-4 left-4 right-4 z-50 flex items-center justify-between p-4 rounded-2xl border border-[var(--border)] shadow-sm;
+    background: var(--bg);
+    backdrop-filter: blur(8px);
   }
 
   /* Cards */
