@@ -9,12 +9,17 @@ import {
   Search,
   Sparkles,
   ChevronRight,
-  ShieldCheck,
   Globe,
   Layout,
   LogIn,
   LogOut,
-  Plus
+  Plus,
+  Video,
+  Type,
+  Image as ImageIcon,
+  MoreHorizontal,
+  X,
+  Check
 } from 'lucide-react'
 import './styles.css'
 
@@ -30,11 +35,9 @@ const productionUrl = 'https://freeailist-navy.vercel.app'
 const supabase = hasSupabaseConfig ? createClient(supabaseUrl, supabaseAnonKey) : null
 
 const fallbackTools = [
-  { id: 'chatgpt', name: 'ChatGPT', tagline: 'L\'intelligence conversationnelle la plus polyvalente au monde.', category: 'Assistant', url: 'https://chatgpt.com', pricing_note: 'Plan Gratuit', tags: ['texte', 'logique'], is_featured: true },
-  { id: 'claude', name: 'Claude', tagline: 'Un assistant sophistiqué axé sur la sécurité, la précision et le raisonnement.', category: 'Assistant', url: 'https://claude.ai', pricing_note: 'Plan Gratuit', tags: ['analyse', 'écriture'], is_featured: true },
-  { id: 'perplexity', name: 'Perplexity', tagline: 'Un moteur de recherche qui fournit des réponses directes sourcées du web.', category: 'Recherche', url: 'https://www.perplexity.ai', pricing_note: 'Plan Gratuit', tags: ['recherche', 'données'], is_featured: true },
-  { id: 'ideogram', name: 'Ideogram', tagline: 'Génération d\'images avancée avec un rendu typographique de pointe.', category: 'Design', url: 'https://ideogram.ai', pricing_note: 'Crédits', tags: ['visuels', 'design'], is_featured: true },
-  { id: 'google-studio', name: 'AI Studio', tagline: 'Plateforme rapide pour prototyper avec les derniers modèles Gemini.', category: 'Dev', url: 'https://aistudio.google.com', pricing_note: 'Gratuit', tags: ['api', 'modèles'], is_featured: false },
+  { id: '1', name: 'ChatGPT', tagline: 'Assistant polyvalent pour le texte et le code.', category: 'Texte', url: 'https://chatgpt.com', pricing_note: 'Gratuit', tags: ['ia', 'chat'], is_featured: true },
+  { id: '2', name: 'Ideogram', tagline: 'Génération d\'images avec typographie parfaite.', category: 'Image', url: 'https://ideogram.ai', pricing_note: 'Crédits', tags: ['design'], is_featured: true },
+  { id: '3', name: 'Luma Dream Machine', tagline: 'Création de vidéos réalistes à partir de texte.', category: 'Vidéo', url: 'https://lumalabs.ai', pricing_note: 'Gratuit', tags: ['vidéo'], is_featured: false },
 ]
 
 function App() {
@@ -43,43 +46,17 @@ function App() {
   const [category, setCategory] = useState('Tous')
   const [loading, setLoading] = useState(hasSupabaseConfig)
   const [session, setSession] = useState(null)
+  const [showAdminPanel, setShowAdminPanel] = useState(false)
   
   const mainRef = useRef(null)
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Hero Entrance
-      const tl = gsap.timeline()
-      tl.from('.animate-text', {
-        y: 80,
-        opacity: 0,
-        duration: 1.4,
-        stagger: 0.1,
-        ease: 'expo.out'
-      })
-      tl.from('.animate-fade', {
-        opacity: 0,
-        duration: 1,
-        ease: 'power2.out'
-      }, '-=0.8')
-
-      // Scroll reveals
-      gsap.utils.toArray('.apple-card').forEach((card, i) => {
-        gsap.from(card, {
-          scrollTrigger: {
-            trigger: card,
-            start: 'top 90%',
-          },
-          y: 60,
-          opacity: 0,
-          duration: 1.2,
-          ease: 'expo.out',
-          delay: (i % 3) * 0.1
-        })
-      })
+      gsap.from('.animate-text', { y: 60, opacity: 0, duration: 1.2, stagger: 0.1, ease: 'expo.out' })
+      gsap.from('.animate-fade', { opacity: 0, duration: 1, ease: 'power2.out' }, '-=0.8')
     }, mainRef)
     return () => ctx.revert()
-  }, [tools])
+  }, [])
 
   useEffect(() => {
     if (!supabase) return
@@ -99,8 +76,8 @@ function App() {
   }, [])
 
   const categories = useMemo(() => {
-    return ['Tous', ...Array.from(new Set(tools.map((tool) => tool.category))).sort()]
-  }, [tools])
+    return ['Tous', 'Texte', 'Image', 'Vidéo', 'Autre']
+  }, [])
 
   const filteredTools = useMemo(() => {
     const q = query.toLowerCase()
@@ -112,181 +89,240 @@ function App() {
 
   const isAdmin = session?.user?.email?.toLowerCase() === ADMIN_EMAIL
 
-  async function signInWithGoogle() {
+  async function signIn() {
     if (!supabase) return
-    const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname)
-    const redirectTo = isLocalhost ? window.location.origin : productionUrl
-    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })
+    const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+    await supabase.auth.signInWithOAuth({ 
+      provider: 'google', 
+      options: { redirectTo: isLocal ? window.location.origin : productionUrl } 
+    })
   }
 
-  async function signOut() {
+  async function addTool(payload) {
     if (!supabase) return
-    await supabase.auth.signOut()
+    const { data, error } = await supabase.from('ai_tools').insert(payload).select().single()
+    if (!error && data) {
+      setTools(prev => [data, ...prev])
+      setShowAdminPanel(false)
+    }
   }
 
   return (
-    <div ref={mainRef} className="min-h-screen bg-black">
+    <div ref={mainRef} className="min-h-screen bg-black text-white">
       <div className="blur-overlay">
         <div className="blur-circle h-[600px] w-[600px] -top-48 -left-48" />
-        <div className="blur-circle h-[500px] w-[500px] top-1/2 -right-24 bg-blue-500/5" />
       </div>
 
-      {/* Nav */}
       <nav className="nav-glass px-6 sm:px-12 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-           <Command size={20} className="text-white" />
-           <span className="text-[14px] font-bold tracking-tight text-white">Free Ai Tools</span>
+        <div className="flex items-center gap-3">
+           <div className="bg-white p-1 rounded-md"><Command size={18} className="text-black" /></div>
+           <span className="text-sm font-bold tracking-tight">Free Ai Tools</span>
         </div>
-        <div className="flex items-center gap-6 sm:gap-8 text-[12px] font-semibold text-white/80">
-          <a href="#directory" className="hover:text-[#0071e3] transition-colors">Répertoire</a>
+        
+        <div className="flex items-center gap-6 sm:gap-10">
+          <div className="hidden sm:flex items-center gap-8">
+            <a href="#directory" className="nav-link">Répertoire</a>
+            {isAdmin && (
+              <button 
+                onClick={() => setShowAdminPanel(!showAdminPanel)} 
+                className={`nav-link flex items-center gap-2 ${showAdminPanel ? 'text-[#0071e3]' : ''}`}
+              >
+                {showAdminPanel ? <X size={16} /> : <Plus size={16} />} 
+                {showAdminPanel ? 'Fermer' : 'Ajouter'}
+              </button>
+            )}
+          </div>
+          
           {session ? (
-            <div className="flex items-center gap-4">
-              {isAdmin && <span className="text-[10px] text-[#0071e3] font-bold uppercase tracking-widest hidden sm:inline">Admin</span>}
-              <button onClick={signOut} className="flex items-center gap-2 hover:text-white"><LogOut size={14} /> Déconnexion</button>
-            </div>
+            <button onClick={() => supabase.auth.signOut()} className="nav-link flex items-center gap-2">
+              <LogOut size={16} /> <span className="hidden sm:inline">Déconnexion</span>
+            </button>
           ) : (
-            <button onClick={signInWithGoogle} className="flex items-center gap-2 h-8 px-4 bg-white text-black rounded-full text-[11px] font-bold hover:bg-[#0071e3] hover:text-white transition-all">
-              <LogIn size={14} /> Connexion
+            <button onClick={signIn} className="h-9 px-5 bg-white text-black rounded-full text-xs font-bold hover:bg-[#0071e3] hover:text-white transition-all">
+              Admin
             </button>
           )}
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="hero-glow pt-32 pb-24 sm:pt-48 sm:pb-32">
-        <div className="content-section text-center">
-          <div className="animate-fade mb-6 inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 text-[13px] font-semibold text-[#86868b] shadow-sm">
+      <main className="content-section pt-32 pb-20">
+        <header className="hero-glow text-center mb-24">
+          <div className="animate-fade mb-6 inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 text-[12px] font-semibold text-[#86868b]">
              <Sparkles size={14} className="text-[#0071e3]" /> 
-             Le répertoire IA sélectionné
+             Ma sélection personnelle d'outils gratuits
           </div>
           <h1 className="heading-1 animate-text">
-            L'Intelligence. <br />
-            <span className="text-[#86868b]">Sans la friction.</span>
+            Le meilleur de l'IA. <br />
+            <span className="text-[#86868b]">Sans dépenser un euro.</span>
           </h1>
-          <p className="animate-text mt-8 mx-auto max-w-2xl text-xl font-medium text-[#86868b] sm:text-2xl leading-relaxed">
-            Un index premium d'outils d'intelligence artificielle qui respectent votre temps et vos ressources. Vérifié, testé et prêt à l'emploi.
+          <p className="animate-text mt-8 mx-auto max-w-2xl text-lg text-[#86868b]">
+            Une collection simple et efficace des meilleurs sites d'IA gratuits que j'ai trouvés. Texte, image, vidéo et plus encore.
           </p>
-          <div className="animate-fade mt-12 flex flex-wrap justify-center gap-4">
-             <a href="#directory" className="btn-apple">Explorer l'Index</a>
-             <button className="btn-ghost">En savoir plus <ChevronRight size={16} /></button>
-          </div>
-        </div>
-      </section>
+        </header>
 
-      {/* Directory */}
-      <section id="directory" className="py-24 sm:py-32">
-        <div className="content-section">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-12 mb-24">
-             <div className="max-w-xl">
-                <h2 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">Notre Répertoire</h2>
-                <p className="mt-4 text-lg font-medium text-[#86868b]">Nous n'indexons que les modèles qui améliorent fondamentalement la production humaine. Chaque entrée est vérifiée manuellement.</p>
-             </div>
-             
-             <div className="flex flex-col gap-6 w-full md:w-[450px]">
-                <div className="relative group">
-                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#86868b]" size={20} />
-                   <input 
-                     type="text" 
-                     placeholder="Chercher des outils, tags ou fonctions"
-                     className="search-input"
-                     value={query}
-                     onChange={(e) => setQuery(e.target.value)}
-                   />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                   {categories.map(c => (
-                     <button 
-                       key={c}
-                       onClick={() => setCategory(c)}
-                       className={`category-pill ${category === c ? 'active' : ''}`}
-                     >
-                       {c}
-                     </button>
-                   ))}
-                </div>
-             </div>
+        {isAdmin && showAdminPanel && (
+          <div className="animate-fade">
+            <AdminForm onAdd={addTool} />
+          </div>
+        )}
+
+        <section id="directory" className="space-y-12">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-white/5 pb-12">
+            <div className="flex flex-wrap justify-center gap-2">
+              {categories.map(c => (
+                <button 
+                  key={c}
+                  onClick={() => setCategory(c)}
+                  className={`category-pill ${category === c ? 'active' : ''}`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+            
+            <div className="relative w-full md:w-80 group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#86868b]" size={18} />
+              <input 
+                type="text" 
+                placeholder="Rechercher..."
+                className="search-input !h-11 !text-sm"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-             {filteredTools.map((tool) => (
-               <div key={tool.id} className="apple-card group">
-                  <div className="flex items-start justify-between mb-8">
-                     <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center text-white group-hover:bg-[#0071e3] transition-colors duration-500">
-                        {tool.category === 'Assistant' ? <Layout size={24} /> : <Globe size={24} />}
-                     </div>
-                     {tool.is_featured && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[#0071e3] bg-[#0071e3]/10 px-3 py-1 rounded-full">
-                           Sélection
-                        </span>
-                     )}
-                  </div>
-                  
-                  <h3 className="text-2xl font-bold tracking-tight text-white mb-2">{tool.name}</h3>
-                  <p className="text-[15px] font-medium text-[#86868b] leading-relaxed mb-8 h-12 overflow-hidden line-clamp-2">
-                    {tool.tagline}
-                  </p>
-                  
-                  <div className="flex flex-wrap gap-2 mb-10">
-                    {tool.tags?.map(tag => (
-                      <span key={tag} className="tag-pill">{tag}</span>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-6 border-t border-white/[0.05]">
-                    <span className="text-[13px] font-semibold text-[#86868b]">{tool.pricing_note}</span>
-                    <a 
-                      href={tool.url} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-white hover:bg-white hover:text-black transition-all duration-300"
-                    >
-                      <ArrowUpRight size={18} />
-                    </a>
-                  </div>
-               </div>
-             ))}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredTools.map(tool => (
+              <ToolCard key={tool.id} tool={tool} />
+            ))}
           </div>
-          
+
           {loading && (
-             <div className="mt-24 flex justify-center">
-                <div className="h-8 w-8 animate-spin border-b-2 border-[#0071e3] rounded-full" />
-             </div>
+            <div className="flex justify-center py-20">
+              <div className="h-8 w-8 animate-spin border-b-2 border-[#0071e3] rounded-full" />
+            </div>
           )}
-        </div>
-      </section>
-
-      {/* Admin Panel Link (Mobile/Visible to Admin) */}
-      {isAdmin && (
-        <section className="pb-24 content-section">
-           <div className="apple-card bg-gradient-to-br from-[#0071e3]/10 to-transparent flex flex-col sm:flex-row items-center justify-between gap-8">
-              <div>
-                 <h3 className="text-2xl font-bold text-white">Console Admin</h3>
-                 <p className="text-[#86868b] mt-2">Prêt à indexer un nouveau signal dans le répertoire ?</p>
-              </div>
-              <button className="btn-apple">
-                <Plus size={18} className="mr-2" /> Ajouter un outil
-              </button>
-           </div>
         </section>
-      )}
+      </main>
 
-      {/* Footer */}
-      <footer className="py-24 border-t border-white/[0.05]">
-        <div className="content-section flex flex-col md:flex-row justify-between items-center gap-12 text-center md:text-left">
-          <div className="flex items-center gap-3">
-             <div className="h-8 w-8 rounded-lg bg-white flex items-center justify-center text-black"><Command size={16} /></div>
-             <span className="text-[14px] font-bold tracking-tight text-white">Free Ai Tools</span>
-          </div>
-          <div className="flex gap-12 text-[13px] font-medium text-[#86868b]">
-             <a href="#" className="hover:text-white transition-colors">Confidentialité</a>
-             <a href="#" className="hover:text-white transition-colors">Éthique</a>
-             <a href="#" className="hover:text-white transition-colors">Github</a>
-          </div>
-          <div className="text-[13px] font-medium text-[#86868b]">
-            © 2026 Qualité Apple-grade
-          </div>
-        </div>
+      <footer className="py-16 border-t border-white/5 text-center">
+        <p className="text-xs font-medium text-[#86868b]">
+          © 2026 Free Ai Tools • Créé avec soin
+        </p>
       </footer>
+    </div>
+  )
+}
+
+function ToolCard({ tool }) {
+  const Icon = {
+    'Texte': Type,
+    'Image': ImageIcon,
+    'Vidéo': Video,
+    'Autre': MoreHorizontal
+  }[tool.category] || Globe
+
+  return (
+    <div className="apple-card group">
+      <div className="flex items-start justify-between mb-8">
+        <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-white group-hover:bg-[#0071e3] transition-colors duration-500">
+          <Icon size={20} />
+        </div>
+        {tool.is_featured && (
+          <span className="text-[9px] font-bold uppercase tracking-widest text-[#0071e3] bg-[#0071e3]/10 px-2 py-1 rounded-md">Sélection</span>
+        )}
+      </div>
+      
+      <h3 className="text-xl font-bold tracking-tight text-white mb-2">{tool.name}</h3>
+      <p className="text-sm font-medium text-[#86868b] leading-relaxed mb-6 h-10 overflow-hidden line-clamp-2">
+        {tool.tagline}
+      </p>
+      
+      <div className="flex items-center justify-between pt-5 border-t border-white/5">
+        <span className="text-[12px] font-semibold text-[#86868b]">{tool.pricing_note}</span>
+        <a 
+          href={tool.url} 
+          target="_blank" 
+          rel="noreferrer" 
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white hover:bg-white hover:text-black transition-all duration-300"
+        >
+          <ArrowUpRight size={16} />
+        </a>
+      </div>
+    </div>
+  )
+}
+
+function AdminForm({ onAdd }) {
+  const [form, setForm] = useState({ name: '', tagline: '', category: 'Texte', url: '', pricing_note: 'Gratuit', tags: '', is_featured: false })
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    await onAdd({
+      ...form,
+      tags: form.tags.split(',').map(t => t.trim()).filter(Boolean)
+    })
+    setLoading(false)
+  }
+
+  return (
+    <div className="admin-section animate-fade">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold">Ajouter un outil</h2>
+        <p className="text-[#86868b] text-sm mt-1">Enregistrez un nouveau site que vous avez trouvé.</p>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="admin-input-group">
+          <label className="admin-label">Nom de l'outil</label>
+          <input required className="admin-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+        </div>
+        
+        <div className="admin-input-group">
+          <label className="admin-label">Catégorie</label>
+          <select className="admin-input" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
+            <option>Texte</option>
+            <option>Image</option>
+            <option>Vidéo</option>
+            <option>Autre</option>
+          </select>
+        </div>
+        
+        <div className="admin-input-group md:col-span-2">
+          <label className="admin-label">Description courte</label>
+          <input required className="admin-input" value={form.tagline} onChange={e => setForm({...form, tagline: e.target.value})} />
+        </div>
+        
+        <div className="admin-input-group">
+          <label className="admin-label">URL (Lien)</label>
+          <input required type="url" className="admin-input" value={form.url} onChange={e => setForm({...form, url: e.target.value})} />
+        </div>
+        
+        <div className="admin-input-group">
+          <label className="admin-label">Note sur le prix</label>
+          <input className="admin-input" value={form.pricing_note} onChange={e => setForm({...form, pricing_note: e.target.value})} />
+        </div>
+
+        <div className="flex items-center gap-4 px-4">
+          <input 
+            type="checkbox" 
+            id="featured"
+            className="admin-checkbox" 
+            checked={form.is_featured} 
+            onChange={e => setForm({...form, is_featured: e.target.checked})} 
+          />
+          <label htmlFor="featured" className="text-sm font-medium text-[#86868b] cursor-pointer">Mettre en avant dans la sélection</label>
+        </div>
+
+        <div className="md:col-span-2 flex justify-end">
+          <button disabled={loading} type="submit" className="btn-apple !w-full md:!w-auto">
+            {loading ? 'Enregistrement...' : 'Enregistrer l\'outil'}
+          </button>
+        </div>
+      </form>
     </div>
   )
 }

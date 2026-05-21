@@ -29,11 +29,31 @@
 
 @layer components {
   .nav-glass {
-    @apply fixed top-0 left-0 right-0 z-[100] h-14 border-b border-white/[0.05] bg-black/70 backdrop-blur-xl transition-all duration-300;
+    @apply fixed top-0 left-0 right-0 z-[100] h-16 border-b border-white/[0.05] bg-black/80 backdrop-blur-2xl transition-all duration-300;
   }
 
-  .content-section {
-    @apply mx-auto max-w-[1200px] px-6 sm:px-8;
+  .nav-link {
+    @apply text-[13px] font-medium text-white/60 transition-all hover:text-white;
+  }
+
+  .admin-section {
+    @apply my-24 rounded-[32px] bg-[#1c1c1e] border border-white/[0.05] p-8 sm:p-12;
+  }
+
+  .admin-input-group {
+    @apply flex flex-col gap-2;
+  }
+
+  .admin-label {
+    @apply text-[11px] font-bold uppercase tracking-widest text-[#86868b] ml-4;
+  }
+
+  .admin-input {
+    @apply h-12 w-full rounded-xl bg-white/5 border border-white/10 px-4 text-sm text-white outline-none transition-all focus:border-[#0071e3] focus:bg-white/10;
+  }
+
+  .admin-checkbox {
+    @apply h-5 w-5 rounded border-white/10 bg-white/5 text-[#0071e3] focus:ring-0;
   }
 
   .hero-glow {
