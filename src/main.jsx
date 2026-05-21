@@ -12,6 +12,9 @@ import {
   ShieldCheck,
   Globe,
   Layout,
+  LogIn,
+  LogOut,
+  Plus
 } from 'lucide-react'
 import './styles.css'
 
@@ -21,22 +24,25 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://xnilbpzflfsimn
 const supabaseAnonKey =
   import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_M7ILY-6b_MRYuu4l3BXLOA_TQEPKTyA'
 const hasSupabaseConfig = Boolean(supabaseUrl && supabaseAnonKey)
+const ADMIN_EMAIL = 'ndarawpro@gmail.com'
+const productionUrl = 'https://freeailist-navy.vercel.app'
 
 const supabase = hasSupabaseConfig ? createClient(supabaseUrl, supabaseAnonKey) : null
 
 const fallbackTools = [
-  { id: 'chatgpt', name: 'ChatGPT', tagline: 'The worlds most capable and versatile conversational intelligence.', category: 'Assistant', url: 'https://chatgpt.com', pricing_note: 'Free Plan', tags: ['text', 'logic'], is_featured: true },
-  { id: 'claude', name: 'Claude', tagline: 'A sophisticated assistant focused on safety, precision, and reasoning.', category: 'Assistant', url: 'https://claude.ai', pricing_note: 'Free Plan', tags: ['analysis', 'writing'], is_featured: true },
-  { id: 'perplexity', name: 'Perplexity', tagline: 'A research engine that provides direct, cited answers from the live web.', category: 'Research', url: 'https://www.perplexity.ai', pricing_note: 'Free Plan', tags: ['search', 'data'], is_featured: true },
-  { id: 'ideogram', name: 'Ideogram', tagline: 'Advanced image generation with industry-leading typography rendering.', category: 'Design', url: 'https://ideogram.ai', pricing_note: 'Credits', tags: ['visuals', 'design'], is_featured: true },
-  { id: 'google-studio', name: 'AI Studio', tagline: 'Fast, flexible playground for prototyping with the latest Gemini models.', category: 'Dev', url: 'https://aistudio.google.com', pricing_note: 'Free', tags: ['api', 'models'], is_featured: false },
+  { id: 'chatgpt', name: 'ChatGPT', tagline: 'L\'intelligence conversationnelle la plus polyvalente au monde.', category: 'Assistant', url: 'https://chatgpt.com', pricing_note: 'Plan Gratuit', tags: ['texte', 'logique'], is_featured: true },
+  { id: 'claude', name: 'Claude', tagline: 'Un assistant sophistiqué axé sur la sécurité, la précision et le raisonnement.', category: 'Assistant', url: 'https://claude.ai', pricing_note: 'Plan Gratuit', tags: ['analyse', 'écriture'], is_featured: true },
+  { id: 'perplexity', name: 'Perplexity', tagline: 'Un moteur de recherche qui fournit des réponses directes sourcées du web.', category: 'Recherche', url: 'https://www.perplexity.ai', pricing_note: 'Plan Gratuit', tags: ['recherche', 'données'], is_featured: true },
+  { id: 'ideogram', name: 'Ideogram', tagline: 'Génération d\'images avancée avec un rendu typographique de pointe.', category: 'Design', url: 'https://ideogram.ai', pricing_note: 'Crédits', tags: ['visuels', 'design'], is_featured: true },
+  { id: 'google-studio', name: 'AI Studio', tagline: 'Plateforme rapide pour prototyper avec les derniers modèles Gemini.', category: 'Dev', url: 'https://aistudio.google.com', pricing_note: 'Gratuit', tags: ['api', 'modèles'], is_featured: false },
 ]
 
 function App() {
   const [tools, setTools] = useState(fallbackTools)
   const [query, setQuery] = useState('')
-  const [category, setCategory] = useState('All')
+  const [category, setCategory] = useState('Tous')
   const [loading, setLoading] = useState(hasSupabaseConfig)
+  const [session, setSession] = useState(null)
   
   const mainRef = useRef(null)
 
@@ -76,6 +82,13 @@ function App() {
   }, [tools])
 
   useEffect(() => {
+    if (!supabase) return
+    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
+    return () => subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
     async function loadTools() {
       if (!supabase) { setLoading(false); return; }
       const { data, error } = await supabase.from('ai_tools').select('*').order('is_featured', { ascending: false }).order('name', { ascending: true })
@@ -86,54 +99,76 @@ function App() {
   }, [])
 
   const categories = useMemo(() => {
-    return ['All', ...Array.from(new Set(tools.map((tool) => tool.category))).sort()]
+    return ['Tous', ...Array.from(new Set(tools.map((tool) => tool.category))).sort()]
   }, [tools])
 
   const filteredTools = useMemo(() => {
     const q = query.toLowerCase()
     return tools.filter((t) => {
-      const matches = category === 'All' || t.category === category
+      const matches = category === 'Tous' || t.category === category
       return matches && (t.name.toLowerCase().includes(q) || t.tagline.toLowerCase().includes(q))
     })
   }, [category, query, tools])
 
+  const isAdmin = session?.user?.email?.toLowerCase() === ADMIN_EMAIL
+
+  async function signInWithGoogle() {
+    if (!supabase) return
+    const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+    const redirectTo = isLocalhost ? window.location.origin : productionUrl
+    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })
+  }
+
+  async function signOut() {
+    if (!supabase) return
+    await supabase.auth.signOut()
+  }
+
   return (
-    <div ref={mainRef} className="min-h-screen bg-[#f5f5f7]">
+    <div ref={mainRef} className="min-h-screen bg-black">
       <div className="blur-overlay">
         <div className="blur-circle h-[600px] w-[600px] -top-48 -left-48" />
-        <div className="blur-circle h-[500px] w-[500px] top-1/2 -right-24 bg-blue-400/10" />
+        <div className="blur-circle h-[500px] w-[500px] top-1/2 -right-24 bg-blue-500/5" />
       </div>
 
       {/* Nav */}
       <nav className="nav-glass px-6 sm:px-12 flex items-center justify-between">
         <div className="flex items-center gap-2">
-           <Command size={20} className="text-[#1d1d1f]" />
-           <span className="text-[14px] font-bold tracking-tight">Atlas</span>
+           <Command size={20} className="text-white" />
+           <span className="text-[14px] font-bold tracking-tight text-white">Free Ai Tools</span>
         </div>
-        <div className="flex items-center gap-8 text-[12px] font-semibold text-[#1d1d1f]/80">
-          <a href="#directory" className="hover:text-[#0071e3] transition-colors">Directory</a>
-          <a href="#" className="hover:text-[#0071e3] transition-colors">About</a>
-          <button className="h-7 px-3 bg-[#1d1d1f] text-white rounded-full text-[11px] font-bold">Access</button>
+        <div className="flex items-center gap-6 sm:gap-8 text-[12px] font-semibold text-white/80">
+          <a href="#directory" className="hover:text-[#0071e3] transition-colors">Répertoire</a>
+          {session ? (
+            <div className="flex items-center gap-4">
+              {isAdmin && <span className="text-[10px] text-[#0071e3] font-bold uppercase tracking-widest hidden sm:inline">Admin</span>}
+              <button onClick={signOut} className="flex items-center gap-2 hover:text-white"><LogOut size={14} /> Déconnexion</button>
+            </div>
+          ) : (
+            <button onClick={signInWithGoogle} className="flex items-center gap-2 h-8 px-4 bg-white text-black rounded-full text-[11px] font-bold hover:bg-[#0071e3] hover:text-white transition-all">
+              <LogIn size={14} /> Connexion
+            </button>
+          )}
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="hero-gradient pt-32 pb-24 sm:pt-48 sm:pb-32">
+      <section className="hero-glow pt-32 pb-24 sm:pt-48 sm:pb-32">
         <div className="content-section text-center">
-          <div className="animate-fade mb-6 inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-[13px] font-semibold text-[#86868b] shadow-sm">
+          <div className="animate-fade mb-6 inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 text-[13px] font-semibold text-[#86868b] shadow-sm">
              <Sparkles size={14} className="text-[#0071e3]" /> 
-             The curated AI repository
+             Le répertoire IA sélectionné
           </div>
           <h1 className="heading-1 animate-text">
-            Intelligence. <br />
-            <span className="text-[#86868b]">Without the friction.</span>
+            L'Intelligence. <br />
+            <span className="text-[#86868b]">Sans la friction.</span>
           </h1>
           <p className="animate-text mt-8 mx-auto max-w-2xl text-xl font-medium text-[#86868b] sm:text-2xl leading-relaxed">
-            A premium index of artificial intelligence tools that respect your time and resources. Verified, tested, and ready to deploy.
+            Un index premium d'outils d'intelligence artificielle qui respectent votre temps et vos ressources. Vérifié, testé et prêt à l'emploi.
           </p>
           <div className="animate-fade mt-12 flex flex-wrap justify-center gap-4">
-             <a href="#directory" className="btn-apple">Explore Index</a>
-             <button className="btn-secondary">Learn more <ChevronRight size={16} /></button>
+             <a href="#directory" className="btn-apple">Explorer l'Index</a>
+             <button className="btn-ghost">En savoir plus <ChevronRight size={16} /></button>
           </div>
         </div>
       </section>
@@ -143,8 +178,8 @@ function App() {
         <div className="content-section">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-12 mb-24">
              <div className="max-w-xl">
-                <h2 className="text-4xl font-bold tracking-tight text-[#1d1d1f] sm:text-5xl">Our Directory</h2>
-                <p className="mt-4 text-lg font-medium text-[#86868b]">We only index models that fundamentally enhance human output. Each entry is manually verified for quality and utility.</p>
+                <h2 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">Notre Répertoire</h2>
+                <p className="mt-4 text-lg font-medium text-[#86868b]">Nous n'indexons que les modèles qui améliorent fondamentalement la production humaine. Chaque entrée est vérifiée manuellement.</p>
              </div>
              
              <div className="flex flex-col gap-6 w-full md:w-[450px]">
@@ -152,7 +187,7 @@ function App() {
                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#86868b]" size={20} />
                    <input 
                      type="text" 
-                     placeholder="Search tools, tags, or features"
+                     placeholder="Chercher des outils, tags ou fonctions"
                      className="search-input"
                      value={query}
                      onChange={(e) => setQuery(e.target.value)}
@@ -176,17 +211,17 @@ function App() {
              {filteredTools.map((tool) => (
                <div key={tool.id} className="apple-card group">
                   <div className="flex items-start justify-between mb-8">
-                     <div className="h-12 w-12 rounded-2xl bg-[#f5f5f7] flex items-center justify-center text-[#1d1d1f] group-hover:bg-[#0071e3] group-hover:text-white transition-colors duration-500">
+                     <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center text-white group-hover:bg-[#0071e3] transition-colors duration-500">
                         {tool.category === 'Assistant' ? <Layout size={24} /> : <Globe size={24} />}
                      </div>
                      {tool.is_featured && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[#0071e3] bg-[#0071e3]/5 px-3 py-1 rounded-full">
-                           Featured
+                        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[#0071e3] bg-[#0071e3]/10 px-3 py-1 rounded-full">
+                           Sélection
                         </span>
                      )}
                   </div>
                   
-                  <h3 className="text-2xl font-bold tracking-tight text-[#1d1d1f] mb-2">{tool.name}</h3>
+                  <h3 className="text-2xl font-bold tracking-tight text-white mb-2">{tool.name}</h3>
                   <p className="text-[15px] font-medium text-[#86868b] leading-relaxed mb-8 h-12 overflow-hidden line-clamp-2">
                     {tool.tagline}
                   </p>
@@ -197,13 +232,13 @@ function App() {
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between pt-6 border-t border-black/[0.05]">
+                  <div className="flex items-center justify-between pt-6 border-t border-white/[0.05]">
                     <span className="text-[13px] font-semibold text-[#86868b]">{tool.pricing_note}</span>
                     <a 
                       href={tool.url} 
                       target="_blank" 
                       rel="noreferrer" 
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f5f7] hover:bg-[#1d1d1f] hover:text-white transition-all duration-300"
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-white hover:bg-white hover:text-black transition-all duration-300"
                     >
                       <ArrowUpRight size={18} />
                     </a>
@@ -220,20 +255,35 @@ function App() {
         </div>
       </section>
 
+      {/* Admin Panel Link (Mobile/Visible to Admin) */}
+      {isAdmin && (
+        <section className="pb-24 content-section">
+           <div className="apple-card bg-gradient-to-br from-[#0071e3]/10 to-transparent flex flex-col sm:flex-row items-center justify-between gap-8">
+              <div>
+                 <h3 className="text-2xl font-bold text-white">Console Admin</h3>
+                 <p className="text-[#86868b] mt-2">Prêt à indexer un nouveau signal dans le répertoire ?</p>
+              </div>
+              <button className="btn-apple">
+                <Plus size={18} className="mr-2" /> Ajouter un outil
+              </button>
+           </div>
+        </section>
+      )}
+
       {/* Footer */}
-      <footer className="py-24 border-t border-black/[0.05]">
-        <div className="content-section flex flex-col md:flex-row justify-between items-center gap-12">
+      <footer className="py-24 border-t border-white/[0.05]">
+        <div className="content-section flex flex-col md:flex-row justify-between items-center gap-12 text-center md:text-left">
           <div className="flex items-center gap-3">
-             <div className="h-8 w-8 rounded-lg bg-[#1d1d1f] flex items-center justify-center text-white"><Command size={16} /></div>
-             <span className="text-[14px] font-bold tracking-tight">Free AI Atlas</span>
+             <div className="h-8 w-8 rounded-lg bg-white flex items-center justify-center text-black"><Command size={16} /></div>
+             <span className="text-[14px] font-bold tracking-tight text-white">Free Ai Tools</span>
           </div>
           <div className="flex gap-12 text-[13px] font-medium text-[#86868b]">
-             <a href="#" className="hover:text-[#1d1d1f] transition-colors">Privacy</a>
-             <a href="#" className="hover:text-[#1d1d1f] transition-colors">Ethics</a>
-             <a href="#" className="hover:text-[#1d1d1f] transition-colors">Github</a>
+             <a href="#" className="hover:text-white transition-colors">Confidentialité</a>
+             <a href="#" className="hover:text-white transition-colors">Éthique</a>
+             <a href="#" className="hover:text-white transition-colors">Github</a>
           </div>
           <div className="text-[13px] font-medium text-[#86868b]">
-            © 2026 Apple-grade quality
+            © 2026 Qualité Apple-grade
           </div>
         </div>
       </footer>

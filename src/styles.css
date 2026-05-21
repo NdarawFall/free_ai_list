@@ -6,12 +6,12 @@
 
 @layer base {
   :root {
-    --apple-bg: #f5f5f7;
-    --apple-card: #ffffff;
-    --apple-text: #1d1d1f;
+    --apple-bg: #000000;
+    --apple-card: #1c1c1e;
+    --apple-text: #f5f5f7;
     --apple-muted: #86868b;
     --apple-accent: #0071e3;
-    --radius: 24px;
+    --radius: 22px;
   }
 
   html {
@@ -29,32 +29,32 @@
 
 @layer components {
   .nav-glass {
-    @apply fixed top-0 left-0 right-0 z-[100] h-14 border-b border-black/[0.05] bg-white/70 backdrop-blur-xl transition-all duration-300;
+    @apply fixed top-0 left-0 right-0 z-[100] h-14 border-b border-white/[0.05] bg-black/70 backdrop-blur-xl transition-all duration-300;
   }
 
   .content-section {
     @apply mx-auto max-w-[1200px] px-6 sm:px-8;
   }
 
-  .hero-gradient {
-    background: radial-gradient(120% 120% at 50% 0%, #fff 0%, #f5f5f7 100%);
+  .hero-glow {
+    background: radial-gradient(circle at 50% -20%, rgba(0, 113, 227, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
   }
 
   .apple-card {
-    @apply relative overflow-hidden bg-white p-8 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)];
+    @apply relative overflow-hidden bg-[#1c1c1e] p-8 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] border border-white/[0.05];
     border-radius: var(--radius);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.04);
   }
 
   .apple-card:hover {
+    @apply border-white/[0.15] bg-[#2c2c2e];
     transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 30px 60px rgba(0,0,0,0.12);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
   }
 
   .apple-card::before {
     content: "";
     @apply absolute inset-0 opacity-0 transition-opacity duration-700;
-    background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(0, 113, 227, 0.05) 0%, transparent 70%);
+    background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(0, 113, 227, 0.1) 0%, transparent 70%);
   }
 
   .apple-card:hover::before {
@@ -65,20 +65,20 @@
     @apply inline-flex h-12 items-center justify-center rounded-full bg-[#0071e3] px-8 text-sm font-semibold text-white transition-all duration-300 hover:bg-[#0077ed] hover:scale-[1.02] active:scale-[0.98];
   }
 
-  .btn-secondary {
-    @apply inline-flex h-12 items-center justify-center rounded-full bg-[#e8e8ed] px-8 text-sm font-semibold text-[#1d1d1f] transition-all duration-300 hover:bg-[#d2d2d7] hover:scale-[1.02] active:scale-[0.98];
+  .btn-ghost {
+    @apply inline-flex h-12 items-center justify-center rounded-full border border-white/10 bg-white/5 px-8 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98];
   }
 
   .search-input {
-    @apply h-14 w-full rounded-2xl bg-[#f2f2f7] px-12 text-lg font-medium outline-none transition-all duration-300 focus:bg-white focus:ring-4 focus:ring-[#0071e3]/10;
+    @apply h-14 w-full rounded-2xl bg-[#1c1c1e] border border-white/5 px-12 text-lg font-medium text-white outline-none transition-all duration-300 focus:bg-[#2c2c2e] focus:border-[#0071e3]/50 focus:ring-4 focus:ring-[#0071e3]/10;
   }
 
   .category-pill {
-    @apply flex h-9 items-center rounded-full border border-transparent bg-transparent px-5 text-[13px] font-medium text-[#86868b] transition-all duration-300 hover:text-[#1d1d1f];
+    @apply flex h-9 items-center rounded-full border border-transparent bg-transparent px-5 text-[13px] font-medium text-[#86868b] transition-all duration-300 hover:text-white;
   }
 
   .category-pill.active {
-    @apply bg-[#1d1d1f] text-white;
+    @apply bg-white text-black;
   }
 
   .blur-overlay {
@@ -86,20 +86,15 @@
   }
 
   .blur-circle {
-    @apply absolute rounded-full blur-[120px] opacity-20;
+    @apply absolute rounded-full blur-[120px] opacity-10;
     background: var(--apple-accent);
   }
 
-  /* Typography Refinement */
   .heading-1 {
-    @apply text-5xl font-bold tracking-tight sm:text-7xl lg:text-[80px] leading-[1.05];
-  }
-
-  .subheading {
-    @apply text-xl font-semibold text-[#86868b] sm:text-2xl;
+    @apply text-5xl font-bold tracking-tight sm:text-7xl lg:text-[80px] leading-[1.05] text-white;
   }
 
   .tag-pill {
-    @apply inline-flex items-center rounded-md bg-[#f5f5f7] px-2 py-1 text-[11px] font-semibold uppercase tracking-tight text-[#86868b];
+    @apply inline-flex items-center rounded-md bg-white/5 border border-white/5 px-2 py-1 text-[11px] font-semibold uppercase tracking-tight text-[#86868b];
   }
 }
