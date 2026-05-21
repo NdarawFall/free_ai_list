@@ -18,6 +18,7 @@ import {
   MoreHorizontal,
   LogOut,
   Zap,
+  Image as ImageIcon
 } from 'lucide-react'
 import './styles.css'
 
@@ -111,7 +112,7 @@ function App() {
   }
 
   return (
-    <div ref={mainRef} className="min-h-screen relative overflow-hidden">
+    <div ref={mainRef} className="min-h-screen relative overflow-hidden bg-[#020617]">
       <div className="nexus-bg" />
       <div className="glow-nexus h-[600px] w-[600px] -top-48 -left-48 bg-blue-600/20" />
       <div className="glow-nexus h-[500px] w-[500px] top-1/2 -right-48 bg-cyan-500/10" />
@@ -173,7 +174,7 @@ function App() {
         <section className="nexus-container mb-32 animate-fade">
           <div className="nexus-dashboard">
              <div className="mb-12">
-               <h2 className="text-3xl font-bold">Nouvelle Indexation</h2>
+               <h2 className="text-3xl font-bold text-white">Nouvelle Indexation</h2>
                <p className="text-slate-500 mt-2">Enregistrez un nouvel outil dans l'Atlas.</p>
              </div>
              <AdminForm onAdd={handleAddTool} />
