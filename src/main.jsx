@@ -1,6 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createClient } from '@supabase/supabase-js'
+import { 
+  BrowserRouter as Router, 
+  Routes, 
+  Route, 
+  Link, 
+  useNavigate, 
+  useLocation 
+} from 'react-router-dom'
 import {
   ArrowUpRight,
   Command,
@@ -17,30 +25,22 @@ import {
   Terminal,
   ChevronRight,
   MessageSquare,
-  ShieldAlert,
   Wallet
 } from 'lucide-react'
 import './styles.css'
 
+// Supabase Setup
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://xnilbpzflfsimnkqxmog.supabase.co'
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_M7ILY-6b_MRYuu4l3BXLOA_TQEPKTyA'
 const ADMIN_EMAIL = 'ndarawpro@gmail.com'
-
 const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null
 
-const fallbackTools = [
-  { id: '1', name: 'ChatGPT', tagline: 'Assistant polyvalent pour le texte et le raisonnement.', category: 'Texte', url: 'https://chatgpt.com', pricing_note: 'Gratuit' },
-  { id: '2', name: 'Ideogram', tagline: 'Génération d\'images avec typographie parfaite.', category: 'Image', url: 'https://ideogram.ai', pricing_note: 'Crédits' },
-  { id: '3', name: 'Luma Dream Machine', tagline: 'Vidéo réaliste à partir de texte.', category: 'Vidéo', url: 'https://lumalabs.ai', pricing_note: 'Essai' },
-]
-
 function App() {
-  const [page, setPage] = useState('accueil')
-  const [tools, setTools] = useState(fallbackTools)
-  const [query, setQuery] = useState('')
-  const [category, setCategory] = useState('Tous')
+  const [tools, setTools] = useState([])
   const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
 
+  // Auth Sync
   useEffect(() => {
     if (!supabase) return
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -48,100 +48,103 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Data Sync
   useEffect(() => {
     async function loadTools() {
       if (!supabase) return
       const { data, error } = await supabase.from('ai_tools').select('*').order('name', { ascending: true })
-      if (!error && data?.length) setTools(data)
+      if (!error && data) setTools(data)
+      setLoading(false)
     }
     loadTools()
   }, [])
 
-  const filteredTools = useMemo(() => {
-    const q = query.toLowerCase()
-    return tools.filter((t) => {
-      const matches = category === 'Tous' || t.category === category
-      return matches && (t.name.toLowerCase().includes(q) || t.tagline.toLowerCase().includes(q))
-    })
-  }, [category, query, tools])
-
   const isAdmin = session?.user?.email?.toLowerCase() === ADMIN_EMAIL
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white selection:bg-blue-500/30">
-      {/* Neon Background Moving */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="glow-nexus absolute -top-[10%] -left-[10%] w-[600px] h-[600px] bg-blue-600/15 rounded-full blur-[120px]" />
-        <div className="glow-nexus absolute top-[40%] -right-[5%] w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[100px]" style={{ animationDelay: '-5s' }} />
-        <div className="glow-nexus absolute bottom-[-10%] left-[20%] w-[400px] h-[400px] bg-indigo-500/5 rounded-full blur-[100px]" style={{ animationDelay: '-10s' }} />
-      </div>
-
-      {/* Navigation Flottante */}
-      <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 h-14 px-4 rounded-full border border-white/[0.08] bg-slate-950/60 backdrop-blur-3xl shadow-2xl">
-        <button onClick={() => setPage('accueil')} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all ${page === 'accueil' ? 'bg-white text-black' : 'text-slate-400 hover:text-white'}`}>
-          <Home size={14} /> <span>Accueil</span>
-        </button>
-        <button onClick={() => setPage('tools')} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all ${page === 'tools' ? 'bg-white text-black' : 'text-slate-400 hover:text-white'}`}>
-          <Zap size={14} /> <span>AI Tools</span>
-        </button>
-        <button onClick={() => setPage('prompts')} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all ${page === 'prompts' ? 'bg-white text-black' : 'text-slate-400 hover:text-white'}`}>
-          <Terminal size={14} /> <span>Prompts</span>
-        </button>
+    <Router>
+      <div className="min-h-screen bg-[#020617] text-white selection:bg-blue-500/30">
+        <BackgroundEffects />
+        <Navbar session={session} isAdmin={isAdmin} />
         
-        <div className="w-px h-6 bg-white/10 mx-2" />
+        <main className="mx-auto max-w-[1400px] px-6 pt-40 pb-24 relative">
+          <Routes>
+            <Route path="/" element={<Accueil />} />
+            <Route path="/tools" element={<AiTools tools={tools} loading={loading} />} />
+            <Route path="/prompts" element={<Prompts />} />
+            {isAdmin && (
+              <Route path="/admin" element={<AdminView onAdd={(newTool) => setTools(prev => [newTool, ...prev])} />} />
+            )}
+            <Route path="*" element={<Accueil />} />
+          </Routes>
+        </main>
 
-        {isAdmin && (
-          <button onClick={() => setPage('admin')} className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all ${page === 'admin' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>
-            <Plus size={16} /> <span className="hidden lg:inline">Ajouter IA</span>
-          </button>
-        )}
+        <Footer />
+      </div>
+    </Router>
+  )
+}
 
-        {session ? (
-          <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-red-400 transition-all">
-            <LogOut size={14} /> <span className="hidden lg:inline">Déconnexion</span>
-          </button>
-        ) : (
-          <button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })} className="flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider bg-white/5 hover:bg-white/10 transition-all">
-             <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center text-[10px] font-bold text-black italic">G</div>
-             <span>Connexion</span>
-          </button>
-        )}
-      </nav>
-
-      {/* Rendu des Pages */}
-      <main className="mx-auto max-w-[1200px] px-6 pt-40 pb-24 relative">
-        {page === 'accueil' && <Accueil onStart={() => setPage('tools')} />}
-        {page === 'tools' && (
-          <AiTools 
-            tools={filteredTools} 
-            category={category} 
-            setCategory={setCategory} 
-            query={query} 
-            setQuery={setQuery} 
-          />
-        )}
-        {page === 'prompts' && <Prompts />}
-        {page === 'admin' && isAdmin && (
-          <div className="animate-fade">
-             <h2 className="text-4xl font-black text-center mb-16">Espace Administrateur</h2>
-             <div className="mx-auto max-w-3xl">
-                <AdminForm onAdd={async (p) => { await supabase.from('ai_tools').insert(p); setPage('tools'); }} />
-             </div>
-          </div>
-        )}
-      </main>
-
-      <footer className="text-center py-20 border-t border-white/5 text-slate-600 text-[10px] font-bold uppercase tracking-[0.2em]">
-        © 2026 Free Ai Tools • L'Intelligence pour tous
-      </footer>
+function BackgroundEffects() {
+  return (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+      <div className="glow-nexus absolute -top-[10%] -left-[10%] w-[600px] h-[600px] bg-blue-600/15 rounded-full blur-[120px]" />
+      <div className="glow-nexus absolute top-[40%] -right-[5%] w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[100px]" style={{ animationDelay: '-5s' }} />
+      <div className="glow-nexus absolute bottom-[-10%] left-[20%] w-[400px] h-[400px] bg-indigo-500/10 rounded-full blur-[100px]" style={{ animationDelay: '-10s' }} />
     </div>
   )
 }
 
-function Accueil({ onStart }) {
+function Navbar({ session, isAdmin }) {
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  async function handleLogin() {
+    if (!supabase) return
+    await supabase.auth.signInWithOAuth({ 
+      provider: 'google', 
+      options: { redirectTo: window.location.origin } 
+    })
+  }
+
+  return (
+    <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 h-14 px-5 rounded-full border border-white/[0.08] bg-slate-950/60 backdrop-blur-3xl shadow-2xl min-w-max">
+      <Link to="/" className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${location.pathname === '/' ? 'bg-white text-black' : 'text-slate-400 hover:text-white'}`}>
+        <Home size={14} /> <span>Accueil</span>
+      </Link>
+      <Link to="/tools" className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${location.pathname === '/tools' ? 'bg-white text-black' : 'text-slate-400 hover:text-white'}`}>
+        <Zap size={14} /> <span>AI Tools</span>
+      </Link>
+      <Link to="/prompts" className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${location.pathname === '/prompts' ? 'bg-white text-black' : 'text-slate-400 hover:text-white'}`}>
+        <Terminal size={14} /> <span>Prompts</span>
+      </Link>
+      
+      <div className="w-px h-6 bg-white/10 mx-1" />
+
+      {isAdmin && (
+        <Link to="/admin" className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${location.pathname === '/admin' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>
+          <Plus size={16} /> <span>Ajouter IA</span>
+        </Link>
+      )}
+
+      {session ? (
+        <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-red-400 transition-all whitespace-nowrap">
+          <LogOut size={14} /> <span>Déconnexion</span>
+        </button>
+      ) : (
+        <button onClick={handleLogin} className="flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider bg-white/5 hover:bg-white/10 transition-all whitespace-nowrap">
+           <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center text-[10px] font-bold text-black italic">G</div>
+           <span>Connexion</span>
+        </button>
+      )}
+    </nav>
+  )
+}
+
+function Accueil() {
+  const navigate = useNavigate()
   return (
     <div className="space-y-40 animate-fade">
-      {/* Hero Section */}
       <section className="text-center py-10">
         <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[11px] font-bold text-blue-400 uppercase tracking-[0.2em] mb-12">
           <Sparkles size={14} /> Le savoir n'a pas de prix
@@ -153,13 +156,12 @@ function Accueil({ onStart }) {
         <p className="text-slate-400 text-xl max-w-3xl mx-auto leading-relaxed mb-16">
           Marre des abonnements à 20€/mois ? J'ai répertorié les meilleures alternatives gratuites et je vous donne les prompts pour obtenir des résultats de niveau pro.
         </p>
-        <button onClick={onStart} className="px-12 h-16 bg-white text-black rounded-full font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-white/10">
+        <button onClick={() => navigate('/tools')} className="px-12 h-16 bg-white text-black rounded-full font-black text-lg hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-white/10">
           Explorer les outils
         </button>
       </section>
 
-      {/* The Problem Section */}
-      <section className="grid md:grid-cols-2 gap-20 items-center">
+      <section className="grid md:grid-cols-2 gap-20 items-center px-4">
         <div className="space-y-8">
           <div className="w-16 h-16 rounded-3xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500">
             <Wallet size={32} />
@@ -176,13 +178,12 @@ function Accueil({ onStart }) {
               <div className="h-2 w-3/4 bg-white/5 rounded-full" />
               <div className="h-2 w-full bg-white/5 rounded-full" />
               <p className="text-sm font-bold text-slate-500 uppercase tracking-widest pt-4">Le constat</p>
-              <p className="text-2xl font-medium">L'accès à l'intelligence ne devrait pas être une question de portefeuille.</p>
+              <p className="text-2xl font-medium text-slate-300">L'accès à l'intelligence ne devrait pas être une question de portefeuille.</p>
            </div>
         </div>
       </section>
 
-      {/* The Solution Section */}
-      <section className="grid md:grid-cols-2 gap-20 items-center">
+      <section className="grid md:grid-cols-2 gap-20 items-center px-4">
         <div className="order-2 md:order-1 p-10 rounded-[40px] border border-blue-500/10 bg-blue-500/[0.02] backdrop-blur-xl">
            <div className="space-y-6">
               <div className="flex gap-2">
@@ -193,7 +194,7 @@ function Accueil({ onStart }) {
               <p className="text-blue-400 font-mono text-sm">/prompt: créer un chef-d'œuvre gratuitement...</p>
               <div className="h-2 w-full bg-white/10 rounded-full" />
               <div className="h-2 w-5/6 bg-white/10 rounded-full" />
-              <p className="text-xl italic font-serif">"Le secret n'est pas dans l'outil, mais dans la commande."</p>
+              <p className="text-xl italic font-serif text-slate-300">"Le secret n'est pas dans l'outil, mais dans la commande."</p>
            </div>
         </div>
         <div className="order-1 md:order-2 space-y-8">
@@ -207,10 +208,9 @@ function Accueil({ onStart }) {
         </div>
       </section>
 
-      {/* Action Section */}
-      <section className="text-center py-20 bg-gradient-to-b from-transparent to-blue-600/5 rounded-[60px] border border-white/5">
+      <section className="text-center py-20 bg-gradient-to-b from-transparent to-blue-600/5 rounded-[60px] border border-white/5 mx-4">
          <h2 className="text-4xl font-black mb-8 text-balance">Prêt à arrêter de perdre votre temps et votre argent ?</h2>
-         <button onClick={onStart} className="px-10 h-16 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/20">
+         <button onClick={() => navigate('/tools')} className="px-10 h-16 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/20">
             Accéder au répertoire maintenant
          </button>
       </section>
@@ -218,7 +218,18 @@ function Accueil({ onStart }) {
   )
 }
 
-function AiTools({ tools, category, setCategory, query, setQuery }) {
+function AiTools({ tools, loading }) {
+  const [query, setQuery] = useState('')
+  const [category, setCategory] = useState('Tous')
+
+  const filtered = useMemo(() => {
+    const q = query.toLowerCase()
+    return tools.filter((t) => {
+      const matches = category === 'Tous' || t.category === category
+      return matches && (t.name.toLowerCase().includes(q) || t.tagline.toLowerCase().includes(q))
+    })
+  }, [category, query, tools])
+
   return (
     <div className="animate-fade">
       <header className="text-center mb-24">
@@ -229,7 +240,7 @@ function AiTools({ tools, category, setCategory, query, setQuery }) {
       <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-16 border-b border-white/5 pb-12">
         <div className="flex flex-wrap justify-center gap-2">
           {['Tous', 'Texte', 'Image', 'Vidéo', 'Autre'].map(c => (
-            <button key={c} onClick={() => setCategory(c)} className={`px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all ${category === c ? 'bg-white text-black' : 'text-slate-500 hover:text-white border border-white/5'}`}>{c}</button>
+            <button key={c} onClick={() => setCategory(c)} className={`px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all ${category === c ? 'bg-white text-black' : 'text-slate-400 hover:text-white border border-white/5'}`}>{c}</button>
           ))}
         </div>
         <div className="relative w-full md:w-80">
@@ -243,13 +254,19 @@ function AiTools({ tools, category, setCategory, query, setQuery }) {
         </div>
       </div>
 
-      <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
-        {tools.map(tool => (
-          <ToolCard key={tool.id} tool={tool} />
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="h-10 w-10 animate-spin border-b-2 border-blue-500 rounded-full" />
+        </div>
+      ) : (
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
+          {filtered.map(tool => (
+            <ToolCard key={tool.id} tool={tool} />
+          ))}
+        </div>
+      )}
       
-      {tools.length === 0 && (
+      {!loading && filtered.length === 0 && (
         <div className="text-center py-20 text-slate-600 font-bold uppercase tracking-widest">
           Aucun outil trouvé pour cette recherche
         </div>
@@ -260,7 +277,7 @@ function AiTools({ tools, category, setCategory, query, setQuery }) {
 
 function Prompts() {
   return (
-    <div className="text-center animate-fade">
+    <div className="text-center animate-fade py-20">
       <div className="w-20 h-20 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center text-slate-500 mx-auto mb-10">
         <Terminal size={40} />
       </div>
@@ -274,6 +291,54 @@ function Prompts() {
   )
 }
 
+function AdminView({ onAdd }) {
+  const navigate = useNavigate()
+  const [form, setForm] = useState({ name: '', tagline: '', category: 'Texte', url: '', pricing_note: 'Gratuit' })
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    const { data, error } = await supabase.from('ai_tools').insert(form).select().single()
+    if (!error && data) {
+      onAdd(data)
+      navigate('/tools')
+    }
+    setLoading(false)
+  }
+
+  return (
+    <div className="animate-fade">
+      <h2 className="text-4xl font-black text-center mb-16">Espace Administrateur</h2>
+      <div className="mx-auto max-w-3xl p-10 rounded-[40px] border border-white/10 bg-white/5 backdrop-blur-3xl shadow-2xl">
+        <form className="grid grid-cols-1 md:grid-cols-2 gap-8" onSubmit={handleSubmit}>
+          <div className="flex flex-col gap-3">
+            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 ml-4">Nom du site</label>
+            <input required className="h-14 px-6 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-blue-500 transition-all text-white" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+          </div>
+          <div className="flex flex-col gap-3">
+            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 ml-4">Catégorie</label>
+            <select className="h-14 px-6 rounded-2xl bg-[#020617] border border-white/10 outline-none focus:border-blue-500 transition-all text-white" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
+              <option>Texte</option><option>Image</option><option>Vidéo</option><option>Autre</option>
+            </select>
+          </div>
+          <div className="md:col-span-2 flex flex-col gap-3">
+            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 ml-4">Description (Simple & Directe)</label>
+            <input required className="h-14 px-6 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-blue-500 transition-all text-white" value={form.tagline} onChange={e => setForm({...form, tagline: e.target.value})} />
+          </div>
+          <div className="md:col-span-2 flex flex-col gap-3">
+            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 ml-4">Lien URL</label>
+            <input required type="url" className="h-14 px-6 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-blue-500 transition-all text-white" value={form.url} onChange={e => setForm({...form, url: e.target.value})} />
+          </div>
+          <button type="submit" disabled={loading} className="md:col-span-2 h-16 bg-blue-600 rounded-2xl font-black text-lg hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/20 active:scale-95">
+            {loading ? 'Indexation en cours...' : 'Enregistrer dans l\'Atlas'}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 function ToolCard({ tool }) {
   const Icon = { 'Texte': Type, 'Image': ImageIcon, 'Vidéo': Video }[tool.category] || Globe
   return (
@@ -282,7 +347,7 @@ function ToolCard({ tool }) {
         <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center text-white group-hover:bg-blue-600 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6">
           <Icon size={28} />
         </div>
-        <a href={tool.url} target="_blank" rel="noreferrer" className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 text-slate-500 hover:bg-white hover:text-black transition-all duration-300"><ArrowUpRight size={24} /></a>
+        <a href={tool.url} target="_blank" rel="noreferrer" className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 text-slate-500 hover:text-white transition-all duration-300"><ArrowUpRight size={24} /></a>
       </div>
       <h3 className="text-2xl font-bold mb-4 group-hover:text-blue-400 transition-colors">{tool.name}</h3>
       <p className="text-slate-500 text-base leading-relaxed mb-10 line-clamp-2 h-12">{tool.tagline}</p>
@@ -296,43 +361,11 @@ function ToolCard({ tool }) {
   )
 }
 
-function AdminForm({ onAdd }) {
-  const [form, setForm] = useState({ name: '', tagline: '', category: 'Texte', url: '', pricing_note: 'Gratuit' })
-  const [loading, setLoading] = useState(false)
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    await onAdd(form)
-    setLoading(false)
-  }
-
+function Footer() {
   return (
-    <div className="p-10 rounded-[40px] border border-white/10 bg-white/5 backdrop-blur-3xl shadow-2xl">
-      <form className="grid grid-cols-1 md:grid-cols-2 gap-8" onSubmit={handleSubmit}>
-        <div className="flex flex-col gap-3">
-          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 ml-4">Nom du site</label>
-          <input required className="h-14 px-6 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-blue-500 transition-all text-white" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-        </div>
-        <div className="flex flex-col gap-3">
-          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 ml-4">Catégorie</label>
-          <select className="h-14 px-6 rounded-2xl bg-[#020617] border border-white/10 outline-none focus:border-blue-500 transition-all text-white" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
-            <option>Texte</option><option>Image</option><option>Vidéo</option><option>Autre</option>
-          </select>
-        </div>
-        <div className="md:col-span-2 flex flex-col gap-3">
-          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 ml-4">Description (Simple & Directe)</label>
-          <input required className="h-14 px-6 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-blue-500 transition-all text-white" value={form.tagline} onChange={e => setForm({...form, tagline: e.target.value})} />
-        </div>
-        <div className="md:col-span-2 flex flex-col gap-3">
-          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 ml-4">Lien de l'outil</label>
-          <input required type="url" className="h-14 px-6 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-blue-500 transition-all text-white" value={form.url} onChange={e => setForm({...form, url: e.target.value})} />
-        </div>
-        <button type="submit" disabled={loading} className="md:col-span-2 h-16 bg-blue-600 rounded-2xl font-black text-lg hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/20 active:scale-95">
-          {loading ? 'Indexation en cours...' : 'Enregistrer dans l\'Atlas'}
-        </button>
-      </form>
-    </div>
+    <footer className="text-center py-20 border-t border-white/5 text-slate-600 text-[10px] font-bold uppercase tracking-[0.2em]">
+      © 2026 Free Ai Tools • L'Intelligence pour tous
+    </footer>
   )
 }
 
