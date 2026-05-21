@@ -1,52 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --bg: #f5f5f7;
-    --fg: #1d1d1f;
-    --card: #ffffff;
-    --border: rgba(0, 0, 0, 0.05);
-  }
   body {
-    @apply bg-[var(--bg)] text-[var(--fg)] font-[Inter] antialiased;
+    @apply bg-white text-slate-900 antialiased font-sans;
   }
 }
 
 @layer components {
   /* Layout */
-  .layout-wrapper {
-    @apply mx-auto max-w-[1400px] px-6 sm:px-12 py-32;
+  .container-custom {
+    @apply mx-auto max-w-6xl px-6 py-12;
   }
   
   /* Navbar */
-  .nexus-nav {
-    @apply fixed top-6 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 h-16 px-6 rounded-full border border-[var(--border)] bg-white/70 backdrop-blur-3xl shadow-lg min-w-max;
+  .navbar-custom {
+    @apply fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-6 py-4;
   }
 
-  /* Bento Grid - Glassmorphism */
-  .bento-grid {
-    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+  /* Cards */
+  .card-custom {
+    @apply p-8 rounded-3xl border border-gray-100 bg-gray-50 shadow-sm transition-all hover:shadow-lg;
   }
 
-  .bento-card {
-    @apply rounded-[40px] border border-[var(--border)] bg-[var(--card)] p-8 shadow-sm backdrop-blur-md transition-all duration-500 hover:shadow-xl hover:-translate-y-2;
+  /* Typography */
+  .h1-custom {
+    @apply text-5xl md:text-7xl font-extrabold tracking-tighter text-slate-950 mb-6;
+  }
+  
+  .text-body {
+    @apply text-lg text-slate-600 leading-relaxed;
   }
 
   /* Buttons */
-  .btn-apple {
-    @apply px-8 py-4 rounded-full bg-black text-white text-sm font-black uppercase tracking-widest hover:bg-black/80 transition-all active:scale-95;
+  .btn-primary {
+    @apply px-6 py-3 rounded-full bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 transition-all;
   }
-
-  .btn-ghost {
-    @apply px-8 py-4 rounded-full border border-[var(--border)] font-black text-sm uppercase tracking-widest hover:bg-black/5 transition-all;
-  }
-
-  /* Admin Inputs */
-  .input-field {
-    @apply h-14 w-full rounded-2xl bg-black/5 border border-black/5 px-6 outline-none focus:border-black/20;
+  
+  .btn-outline {
+    @apply px-6 py-3 rounded-full border border-gray-200 font-bold text-sm hover:bg-gray-100 transition-all;
   }
 }
