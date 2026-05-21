@@ -27,10 +27,12 @@ import {
   MessageSquare,
   Wallet,
   Settings,
-  Cpu,
-  Layers,
   ArrowRight,
-  Lightbulb
+  Lightbulb,
+  BookOpen,
+  Coffee,
+  CheckCircle2,
+  Clock
 } from 'lucide-react'
 import './styles.css'
 
@@ -45,7 +47,6 @@ function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Auth Sync
   useEffect(() => {
     if (!supabase) return
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -53,7 +54,6 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Data Sync
   useEffect(() => {
     async function loadTools() {
       if (!supabase) return
@@ -76,8 +76,9 @@ function App() {
           <Routes>
             <Route path="/" element={<Accueil />} />
             <Route path="/ai" element={<ToolDirectory type="ai" tools={tools} loading={loading} />} />
-            <Route path="/tools" element={<ToolDirectory type="tools" tools={tools} loading={loading} />} />
+            <Route path="/tools" element={<ToolsPlaceholder />} />
             <Route path="/prompts" element={<Prompts />} />
+            <Route path="/blog" element={<Blog />} />
             {isAdmin && (
               <Route path="/admin" element={<AdminView onAdd={(newTool) => setTools(prev => [newTool, ...prev])} />} />
             )}
@@ -95,8 +96,7 @@ function BackgroundEffects() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 bg-white">
       <div className="glow-nexus absolute -top-[10%] -left-[10%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px]" />
-      <div className="glow-nexus absolute top-[40%] -right-[5%] w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-[100px]" style={{ animationDelay: '-5s' }} />
-      <div className="glow-nexus absolute bottom-[-10%] left-[20%] w-[400px] h-[400px] bg-indigo-500/5 rounded-full blur-[100px]" style={{ animationDelay: '-10s' }} />
+      <div className="glow-nexus absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[100px]" style={{ animationDelay: '-10s' }} />
     </div>
   )
 }
@@ -126,6 +126,9 @@ function Navbar({ session, isAdmin }) {
       <Link to="/prompts" className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${location.pathname === '/prompts' ? 'bg-black text-white' : 'text-slate-500 hover:text-black'}`}>
         <Terminal size={14} /> <span>Prompts</span>
       </Link>
+      <Link to="/blog" className={`flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${location.pathname === '/blog' ? 'bg-black text-white' : 'text-slate-500 hover:text-black'}`}>
+        <BookOpen size={14} /> <span>Blog</span>
+      </Link>
       
       <div className="w-px h-6 bg-black/5 mx-1" />
 
@@ -136,7 +139,7 @@ function Navbar({ session, isAdmin }) {
       )}
 
       {session ? (
-        <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-red-500 transition-all whitespace-nowrap">
+        <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-red-400 transition-all whitespace-nowrap">
           <LogOut size={14} /> <span>Déconnexion</span>
         </button>
       ) : (
@@ -149,35 +152,36 @@ function Navbar({ session, isAdmin }) {
   )
 }
 
-function Loader({ onComplete }) {
-  const [progress, setProgress] = useState(0)
+function CinematicLoader({ onComplete }) {
+  const [index, setIndex] = useState(0)
+  const words = ["RECHERCHE", "SÉLECTION", "OPTIMISATION", "ACCESSIBILITÉ", "CRÉATION"]
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(timer)
-          setTimeout(onComplete, 500)
-          return 100
+    const interval = setInterval(() => {
+      setIndex(prev => {
+        if (prev >= words.length - 1) {
+          clearInterval(interval)
+          setTimeout(onComplete, 800)
+          return prev
         }
-        return prev + 5
+        return prev + 1
       })
-    }, 50)
-    return () => clearInterval(timer)
+    }, 400)
+    return () => clearInterval(interval)
   }, [onComplete])
 
   return (
-    <div className="loader-container">
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 bg-black flex items-center justify-center rounded-xl">
-          <Command size={24} className="text-white" />
-        </div>
+    <div className="cinematic-loader">
+      <div className="flex items-center gap-3 mb-12">
+        <Command size={24} className="text-black" />
         <span className="text-xl font-black tracking-tighter">Free AI Atlas</span>
       </div>
-      <div className="loader-bar">
-        <div className="loader-progress" style={{ width: `${progress}%` }} />
+      <div className="loader-text-sequence">
+        <span className="loader-word" style={{ transform: `translateY(-${index * 100}%)` }}>
+          {words.map(w => <span key={w} className="h-12 sm:h-16 flex items-center justify-center">{w}</span>)}
+        </span>
       </div>
-      <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Initialisation de l'Atlas...</p>
+      <div className="mt-12 w-1 w-1 bg-blue-600 rounded-full animate-ping" />
     </div>
   )
 }
@@ -186,143 +190,124 @@ function Accueil() {
   const navigate = useNavigate()
   const [isLoaded, setIsLoaded] = useState(false)
 
-  if (!isLoaded) return <Loader onComplete={() => setIsLoaded(true)} />
+  if (!isLoaded) return <CinematicLoader onComplete={() => setIsLoaded(true)} />
 
   return (
-    <div className="space-y-48 animate-fade pb-20">
+    <div className="space-y-64 animate-fade pb-20">
       {/* Hero Section */}
       <section className="text-center py-20 flex flex-col items-center">
         <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-blue-600/5 border border-blue-600/10 text-[11px] font-bold text-blue-600 uppercase tracking-[0.2em] mb-12">
-          <Sparkles size={14} /> Plus qu'un simple répertoire
+          <Sparkles size={14} /> Le QG des créateurs de contenu
         </div>
         <h1 className="nexus-h1 mb-12 max-w-5xl leading-[0.9]">
-          L'élite du gratuit <br />
-          <span className="text-slate-400 italic">accessible à tous.</span>
+          Créez sans budget, <br />
+          <span className="text-slate-400 italic">sans limites.</span>
         </h1>
         <p className="text-slate-500 text-xl max-w-2xl mx-auto leading-relaxed mb-16">
-          Nous brisons les barrières du coût. Découvrez les meilleures IA, les plateformes créatives les plus puissantes et les secrets du prompting pour dominer votre domaine sans frais.
+          Vous voulez lancer une chaîne <strong>Faceless YouTube</strong> ou devenir créateur de contenu mais les abonnements IA coûtent trop cher ? <br />
+          J'ai fait les recherches pour vous. Voici l'index ultime des outils 100% gratuits.
         </p>
         <div className="flex flex-wrap justify-center gap-6">
           <button onClick={() => navigate('/ai')} className="px-10 h-16 bg-black text-white rounded-full font-black text-lg hover:scale-105 transition-all shadow-2xl shadow-black/10">
-            Accéder à l'Espace AI
+            Voir les IA Gratuites
           </button>
-          <button onClick={() => navigate('/tools')} className="px-10 h-16 bg-white text-black border border-black/5 rounded-full font-black text-lg hover:bg-slate-50 transition-all">
-            Outils Créateurs
+          <button onClick={() => navigate('/prompts')} className="px-10 h-16 bg-white text-black border border-black/5 rounded-full font-black text-lg hover:bg-slate-50 transition-all">
+            Masterclass Prompting
           </button>
         </div>
       </section>
 
-      {/* Sections SaaS Quality */}
-      <div className="grid gap-40">
-        {/* Section 1: Money/Accessibility */}
-        <section className="grid md:grid-cols-2 gap-24 items-center px-4">
-          <div className="space-y-8">
-            <div className="w-16 h-16 rounded-3xl bg-blue-600/5 border border-blue-600/10 flex items-center justify-center text-blue-600">
-              <Wallet size={32} />
-            </div>
-            <h2 className="text-5xl font-black leading-tight tracking-tighter">L'argent ne doit plus être une barrière.</h2>
-            <p className="text-slate-500 text-lg leading-relaxed">
-              Le marché de l'IA est saturé d'abonnements à prix d'or. Nous pensons que le génie doit être démocratisé. Nous sélectionnons uniquement des outils qui offrent une puissance comparable aux modèles payants, sans vous demander votre carte bancaire.
-            </p>
-            <div className="flex items-center gap-6 pt-4">
-               <div className="flex flex-col">
-                  <span className="text-3xl font-black">0€</span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Coût mensuel</span>
-               </div>
-               <div className="w-px h-10 bg-black/5" />
-               <div className="flex flex-col">
-                  <span className="text-3xl font-black">100%</span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Vérifié humain</span>
-               </div>
-            </div>
+      {/* The Vision Section */}
+      <section className="grid lg:grid-cols-12 gap-16 items-start px-4">
+        <div className="lg:col-span-7 space-y-12">
+          <div className="inline-flex items-center gap-3 text-blue-600 font-bold uppercase tracking-widest text-xs">
+            <CheckCircle2 size={18} /> Notre Mission
           </div>
-          <div className="nexus-card bg-slate-50 border-none shadow-none p-12">
-             <div className="space-y-8">
-                <div className="flex justify-between items-center">
-                   <div className="flex gap-2">
-                      <div className="h-3 w-3 bg-red-400 rounded-full" />
-                      <div className="h-3 w-3 bg-yellow-400 rounded-full" />
-                      <div className="h-3 w-3 bg-green-400 rounded-full" />
-                   </div>
-                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Comparatif Marché</span>
-                </div>
-                <div className="space-y-4">
-                   <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-black/5">
-                      <span className="font-bold">Modèles Premium</span>
-                      <span className="text-red-500 font-bold">240€+ / an</span>
-                   </div>
-                   <div className="flex items-center justify-between p-4 bg-black text-white rounded-2xl shadow-xl shadow-black/20">
-                      <span className="font-bold">Free AI Atlas</span>
-                      <span className="text-blue-400 font-bold">Toujours Gratuit</span>
-                   </div>
-                </div>
-             </div>
-          </div>
-        </section>
-
-        {/* Section 2: Prompts/Communication */}
-        <section className="grid md:grid-cols-2 gap-24 items-center px-4">
-          <div className="order-2 md:order-1 relative">
-             <div className="absolute -inset-10 bg-blue-600/5 rounded-full blur-[100px] -z-10" />
-             <div className="space-y-6">
-                <div className="p-6 bg-white rounded-3xl shadow-xl border border-black/5">
-                   <p className="text-xs font-bold text-blue-600 mb-2 uppercase">Prompt Expert</p>
-                   <p className="text-lg italic font-medium leading-relaxed">"Agis comme un directeur artistique senior. Transforme cette idée brute en un concept visuel néo-futuriste avec une palette de bleu minuit..."</p>
-                </div>
-                <div className="p-6 bg-white/50 rounded-3xl border border-black/5 ml-12">
-                   <div className="flex items-center gap-3 text-slate-400">
-                      <Terminal size={16} />
-                      <span className="text-sm">Génération des résultats parfaits...</span>
-                   </div>
-                </div>
-             </div>
-          </div>
-          <div className="order-1 md:order-2 space-y-8">
-            <div className="w-16 h-16 rounded-3xl bg-blue-600/5 border border-blue-600/10 flex items-center justify-center text-blue-600">
-              <Lightbulb size={32} />
-            </div>
-            <h2 className="text-5xl font-black leading-tight tracking-tighter">L'outil n'est rien sans la commande.</h2>
-            <p className="text-slate-500 text-lg leading-relaxed">
-              La plupart des gens pensent que l'IA est médiocre parce qu'ils ne savent pas lui parler. Nous fournissons pour chaque outil des structures de prompts testées qui débloquent leur véritable potentiel. Vous ne recevez pas juste un lien, vous recevez le mode d'emploi.
-            </p>
-            <button onClick={() => navigate('/prompts')} className="flex items-center gap-2 font-bold text-black group">
-              Découvrir les prompts <ArrowRight size={18} className="group-hover:translate-x-1 transition-all" />
-            </button>
-          </div>
-        </section>
-
-        {/* Section 3: Platforms for Creators */}
-        <section className="text-center bg-black text-white p-20 rounded-[60px] shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px]" />
-          <h2 className="text-5xl font-black mb-8">Un écosystème pour les créateurs.</h2>
-          <p className="text-slate-400 text-xl max-w-2xl mx-auto mb-16 leading-relaxed">
-            Au-delà de l'IA, nous indexons les plateformes qui facilitent la vie des créateurs de contenu : design, montage, organisation et distribution. Tout ce dont vous avez besoin pour bâtir votre empire numérique.
+          <h2 className="text-5xl sm:text-7xl font-black leading-tight tracking-tighter">
+            Démocratiser l'intelligence <span className="text-gradient-blue">partout.</span>
+          </h2>
+          <p className="text-slate-500 text-xl leading-relaxed max-w-3xl">
+            Surtout pour les jeunes créateurs en Afrique et ailleurs, 20$ par mois est une barrière infranchissable. 
+            <strong> Free AI Atlas</strong> est né pour casser ce mur. Nous testons, vérifions et listons uniquement les outils qui ne vous demandent pas de carte bancaire pour être productif.
           </p>
-          <div className="flex justify-center gap-12 flex-wrap">
-             <div className="flex flex-col items-center gap-4">
-                <div className="h-16 w-16 bg-white/5 rounded-2xl flex items-center justify-center"><ImageIcon size={32} /></div>
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Visuels</span>
+          <div className="grid sm:grid-cols-2 gap-8">
+             <div className="p-8 rounded-3xl bg-slate-50 border border-black/5">
+                <h4 className="font-black text-xl mb-4">Recherche chirurgicale</h4>
+                <p className="text-slate-500 text-sm">Je passe des heures à tester des plateformes obscures pour ne garder que la crème du gratuit.</p>
              </div>
-             <div className="flex flex-col items-center gap-4">
-                <div className="h-16 w-16 bg-white/5 rounded-2xl flex items-center justify-center"><Video size={32} /></div>
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Vidéo</span>
-             </div>
-             <div className="flex flex-col items-center gap-4">
-                <div className="h-16 w-16 bg-white/5 rounded-2xl flex items-center justify-center"><Layers size={32} /></div>
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Système</span>
+             <div className="p-8 rounded-3xl bg-slate-50 border border-black/5">
+                <h4 className="font-black text-xl mb-4">Prompting de survie</h4>
+                <p className="text-slate-500 text-sm">Pas besoin de ChatGPT Plus si vous savez comment parler aux modèles gratuits. Je vous donne les clés.</p>
              </div>
           </div>
-        </section>
-      </div>
+        </div>
+        <div className="lg:col-span-5 relative">
+           <div className="nexus-card bg-white p-12 border-none shadow-2xl">
+              <div className="flex flex-col gap-8">
+                 <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-bold text-xl">1</div>
+                    <span className="font-black text-lg">Trouve ton outil</span>
+                 </div>
+                 <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xl">2</div>
+                    <span className="font-black text-lg text-slate-400">Copie le Prompt Pro</span>
+                 </div>
+                 <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xl">3</div>
+                    <span className="font-black text-lg text-slate-400">Crée ton contenu</span>
+                 </div>
+              </div>
+           </div>
+        </div>
+      </section>
 
-      {/* CTA Final */}
-      <section className="text-center py-20">
-         <h2 className="text-4xl font-black mb-12">Commencez votre ascension.</h2>
-         <div className="flex flex-wrap justify-center gap-4">
-            <button onClick={() => navigate('/ai')} className="px-10 h-16 bg-blue-600 text-white rounded-full font-black text-lg hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/20">
-              Explorer l'Atlas IA
-            </button>
+      {/* Creators Workflow Section */}
+      <section className="bg-black text-white p-20 rounded-[80px] shadow-3xl overflow-hidden relative">
+         <div className="absolute top-0 right-0 w-full h-full bg-blue-600/5 -z-10" />
+         <div className="text-center mb-24">
+            <h2 className="text-5xl sm:text-7xl font-black mb-8">L'Arsenal Faceless YouTube.</h2>
+            <p className="text-slate-400 text-xl max-w-2xl mx-auto">Tout ce dont vous avez besoin pour lancer une chaîne rentable de A à Z, sans investir un seul euro au début.</p>
          </div>
+         <div className="grid md:grid-cols-3 gap-12">
+            {[
+              { icon: Type, title: "Script & Histoire", desc: "IA textuelles pour la narration." },
+              { icon: Video, title: "Génération Vidéo", desc: "Clips et animations 100% gratuits." },
+              { icon: ImageIcon, title: "Miniatures & Art", desc: "Designs pro sans Photoshop." }
+            ].map(item => (
+              <div key={item.title} className="p-10 rounded-[40px] bg-white/5 border border-white/5 text-center">
+                 <item.icon size={48} className="mx-auto mb-6 text-blue-500" />
+                 <h4 className="text-2xl font-black mb-4">{item.title}</h4>
+                 <p className="text-slate-500 text-sm">{item.desc}</p>
+              </div>
+            ))}
+         </div>
+      </section>
+
+      {/* Prompts Section teaser */}
+      <section className="grid md:grid-cols-2 gap-24 items-center px-4">
+        <div className="space-y-8">
+          <div className="w-16 h-16 rounded-3xl bg-blue-600/5 border border-blue-600/10 flex items-center justify-center text-blue-600">
+            <Lightbulb size={32} />
+          </div>
+          <h2 className="text-5xl font-black leading-tight tracking-tighter text-gradient-blue">Le pouvoir des mots.</h2>
+          <p className="text-slate-500 text-xl leading-relaxed">
+            La différence entre un résultat médiocre et un chef-d'œuvre, c'est le prompt. Je teste chaque commande pour m'assurer qu'elle fonctionne parfaitement avec les versions gratuites.
+          </p>
+          <button onClick={() => navigate('/prompts')} className="flex items-center gap-2 font-bold text-black group text-lg">
+            Voir la bibliothèque <ArrowRight size={22} className="group-hover:translate-x-1 transition-all" />
+          </button>
+        </div>
+        <div className="p-12 rounded-[50px] bg-slate-50 border border-black/5 font-mono text-sm space-y-4">
+           <div className="flex gap-2 mb-6">
+              <div className="w-3 h-3 bg-red-400 rounded-full" />
+              <div className="w-3 h-3 bg-yellow-400 rounded-full" />
+              <div className="w-3 h-3 bg-green-400 rounded-full" />
+           </div>
+           <p className="text-blue-600 font-bold">// PROMPT OPTIMISÉ POUR MODÈLES GRATUITS</p>
+           <p className="text-slate-400">"Construis une structure de vidéo YouTube captivante en utilisant la psychologie de l'attention..."</p>
+           <div className="h-1 w-full bg-black/5 rounded-full" />
+           <div className="h-1 w-3/4 bg-black/5 rounded-full" />
+        </div>
       </section>
     </div>
   )
@@ -334,10 +319,6 @@ function ToolDirectory({ type, tools, loading }) {
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase()
-    // Simple logic: if type is 'ai', filter tools that are in AI categories. 
-    // In a real app, you might have a 'is_ai' boolean in Supabase.
-    // For now, we'll assume any tool that has tags or categories like 'Texte/Image/Vidéo' might be AI.
-    // We can refine this by checking the tool data.
     return tools.filter((t) => {
       const isAI = ['Texte', 'Image', 'Vidéo'].includes(t.category)
       const typeMatches = type === 'ai' ? isAI : !isAI
@@ -354,25 +335,25 @@ function ToolDirectory({ type, tools, loading }) {
   return (
     <div className="animate-fade">
       <header className="text-center mb-24 flex flex-col items-center">
-        <div className="h-14 w-14 bg-black flex items-center justify-center rounded-2xl text-white mb-6">
+        <div className="h-14 w-14 bg-black flex items-center justify-center rounded-2xl text-white mb-6 shadow-xl">
           {type === 'ai' ? <Zap size={32} /> : <Settings size={32} />}
         </div>
-        <h2 className="text-4xl sm:text-7xl font-black tracking-tighter mb-6">{type === 'ai' ? 'Atlas AI' : 'Creator Tools'}</h2>
+        <h2 className="text-5xl sm:text-8xl font-black tracking-tighter mb-6">{type === 'ai' ? 'Atlas AI' : 'Outils Créateurs'}</h2>
         <p className="text-slate-500 text-xl max-w-xl mx-auto">
-          {type === 'ai' ? 'Les cerveaux numériques les plus puissants en accès libre.' : 'Les plateformes essentielles pour bâtir et créer sans contraintes.'}
+          {type === 'ai' ? 'Les cerveaux numériques accessibles à tous.' : 'Bientôt disponible.'}
         </p>
       </header>
 
       <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-16 border-b border-black/5 pb-12">
         <div className="flex flex-wrap justify-center gap-2">
           {categories.map(c => (
-            <button key={c} onClick={() => setCategory(c)} className={`px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all ${category === c ? 'bg-black text-white' : 'text-slate-500 hover:text-black border border-black/5'}`}>{c}</button>
+            <button key={c} onClick={() => setCategory(c)} className={`px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all ${category === c ? 'bg-black text-white shadow-xl' : 'text-slate-500 hover:text-black border border-black/5'}`}>{c}</button>
           ))}
         </div>
         <div className="relative w-full md:w-80">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input 
-            placeholder="Rechercher..." 
+            placeholder="Chercher..." 
             className="nexus-search"
             value={query}
             onChange={e => setQuery(e.target.value)}
@@ -393,10 +374,25 @@ function ToolDirectory({ type, tools, loading }) {
       )}
       
       {!loading && filtered.length === 0 && (
-        <div className="text-center py-20 text-slate-400 font-bold uppercase tracking-widest border border-dashed border-black/5 rounded-[40px]">
-          Aucun outil indexé dans cette section
+        <div className="text-center py-24 text-slate-400 font-bold uppercase tracking-[0.2em] border-2 border-dashed border-black/5 rounded-[60px]">
+          Aucune pépite trouvée ici
         </div>
       )}
+    </div>
+  )
+}
+
+function ToolsPlaceholder() {
+  return (
+    <div className="text-center py-32 animate-fade flex flex-col items-center">
+       <div className="w-24 h-24 bg-slate-50 rounded-[40px] flex items-center justify-center text-slate-300 mb-12 border border-black/5">
+          <Settings size={48} className="animate-spin" style={{ animationDuration: '4s' }} />
+       </div>
+       <h2 className="text-5xl font-black tracking-tighter mb-6">Section en cours de curation</h2>
+       <p className="text-slate-500 text-xl max-w-xl mx-auto mb-12">Je suis en train de tester les meilleures plateformes de montage, de gestion et de distribution gratuites pour vous offrir un arsenal complet.</p>
+       <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-slate-100 text-slate-400 font-bold uppercase tracking-widest text-xs">
+          <Clock size={16} /> Déploiement prochainement
+       </div>
     </div>
   )
 }
@@ -404,14 +400,49 @@ function ToolDirectory({ type, tools, loading }) {
 function Prompts() {
   return (
     <div className="text-center animate-fade py-20">
-      <div className="w-20 h-20 bg-black flex items-center justify-center text-white mx-auto mb-10 rounded-3xl shadow-xl">
+      <div className="w-20 h-20 bg-black flex items-center justify-center text-white mx-auto mb-10 rounded-3xl shadow-2xl">
         <Terminal size={40} />
       </div>
-      <h2 className="text-4xl sm:text-7xl font-black tracking-tighter mb-8">Espace Prompts</h2>
-      <p className="text-slate-500 text-xl max-w-2xl mx-auto mb-12">Le guide ultime pour parler aux IA. Nous préparons une bibliothèque de commandes prêtes à l'emploi pour transformer n'importe quel outil gratuit en expert.</p>
-      <div className="p-24 border border-black/5 border-dashed rounded-[50px] flex flex-col items-center gap-4 text-slate-300">
-        <Terminal size={32} />
-        <span className="font-black uppercase tracking-[0.3em]">Déploiement imminent</span>
+      <h2 className="text-5xl sm:text-8xl font-black tracking-tighter mb-8 italic text-gradient-blue">Espace Prompts</h2>
+      <p className="text-slate-500 text-xl max-w-2xl mx-auto mb-16">Le guide ultime pour parler aux IA. Nous préparons une bibliothèque de commandes prêtes à l'emploi pour transformer n'importe quel outil gratuit en expert.</p>
+      <div className="p-32 border-2 border-black/5 border-dashed rounded-[60px] flex flex-col items-center gap-6 text-slate-300">
+        <Coffee size={48} />
+        <span className="font-black uppercase tracking-[0.4em] text-sm">On prépare le café, ça arrive...</span>
+      </div>
+    </div>
+  )
+}
+
+function Blog() {
+  const posts = [
+    { title: "Comment lancer un Faceless YouTube sans dépenser 1€", date: "20 Mai 2026", category: "Stratégie" },
+    { title: "Les 5 meilleures alternatives gratuites à Midjourney", date: "18 Mai 2026", category: "IA Image" },
+    { title: "Pourquoi le prompt engineering est le nouveau super-pouvoir", date: "15 Mai 2026", category: "Formation" }
+  ]
+
+  return (
+    <div className="animate-fade">
+      <header className="text-center mb-32">
+        <h2 className="text-5xl sm:text-8xl font-black tracking-tighter mb-8">Le Blog Atlas</h2>
+        <p className="text-slate-500 text-xl max-w-2xl mx-auto">Guides, stratégies et actualités pour les créateurs de contenu modernes.</p>
+      </header>
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
+        {posts.map((post, i) => (
+          <div key={i} className="blog-card group">
+            <div className="blog-image-placeholder">
+               <ImageIcon size={48} />
+            </div>
+            <div className="flex items-center gap-4 mb-4">
+               <span className="px-3 py-1 rounded-full bg-blue-600/5 text-[10px] font-black uppercase text-blue-600 border border-blue-600/10">{post.category}</span>
+               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{post.date}</span>
+            </div>
+            <h3 className="text-2xl font-black leading-tight mb-6 group-hover:text-blue-600 transition-colors">{post.title}</h3>
+            <button className="flex items-center gap-2 font-bold text-sm text-black">
+               Lire la suite <ArrowRight size={16} />
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -452,7 +483,7 @@ function AdminView({ onAdd }) {
             </select>
           </div>
           <div className="md:col-span-2 nexus-input-group">
-            <label className="nexus-label">Description SEO (Honnête & Courte)</label>
+            <label className="nexus-label">Description (Honnête & Courte)</label>
             <input required className="nexus-field" value={form.tagline} onChange={e => setForm({...form, tagline: e.target.value})} />
           </div>
           <div className="md:col-span-2 nexus-input-group">
@@ -463,7 +494,7 @@ function AdminView({ onAdd }) {
             <label className="nexus-label">Status de gratuité</label>
             <input className="nexus-field" value={form.pricing_note} onChange={e => setForm({...form, pricing_note: e.target.value})} />
           </div>
-          <button type="submit" disabled={loading} className="md:col-span-2 h-16 bg-blue-600 rounded-2xl font-black text-lg text-white hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/20 active:scale-95">
+          <button type="submit" disabled={loading} className="md:col-span-2 h-16 bg-blue-600 rounded-[24px] font-black text-lg text-white hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/20 active:scale-95">
             {loading ? 'Indexation en cours...' : 'Ajouter à l\'Atlas'}
           </button>
         </form>
@@ -476,17 +507,17 @@ function ToolCard({ tool }) {
   const Icon = { 'Texte': Type, 'Image': ImageIcon, 'Vidéo': Video }[tool.category] || Globe
   return (
     <div className="nexus-card group">
-      <div className="flex items-start justify-between mb-8">
-        <div className="h-14 w-14 rounded-2xl bg-black flex items-center justify-center text-white group-hover:bg-blue-600 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6">
-          <Icon size={28} />
+      <div className="flex items-start justify-between mb-10">
+        <div className="h-16 w-16 rounded-[22px] bg-slate-50 border border-black/5 flex items-center justify-center text-black group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-sm">
+          <Icon size={32} />
         </div>
-        <a href={tool.url} target="_blank" rel="noreferrer" className="w-12 h-12 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:bg-black hover:text-white transition-all duration-300"><ArrowUpRight size={24} /></a>
+        <a href={tool.url} target="_blank" rel="noreferrer" className="w-12 h-12 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-400 hover:bg-black hover:text-white transition-all duration-300 shadow-sm"><ArrowUpRight size={24} /></a>
       </div>
-      <h3 className="text-2xl font-black mb-4 group-hover:text-blue-600 transition-colors tracking-tight">{tool.name}</h3>
-      <p className="text-slate-500 text-base leading-relaxed mb-10 line-clamp-2 h-12 font-medium">{tool.tagline}</p>
+      <h3 className="text-3xl font-black mb-4 group-hover:text-blue-600 transition-colors tracking-tighter">{tool.name}</h3>
+      <p className="text-slate-500 text-base leading-relaxed mb-12 line-clamp-2 h-12 font-medium">{tool.tagline}</p>
       <div className="pt-8 border-t border-black/5 flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{tool.pricing_note}</span>
-        <div className="px-3 py-1 rounded-full bg-slate-100 text-[9px] font-bold uppercase tracking-widest text-slate-500 border border-black/5">
+        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">{tool.pricing_note}</span>
+        <div className="px-3 py-1 rounded-full bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500 border border-black/5 group-hover:bg-blue-50 transition-colors">
           {tool.category}
         </div>
       </div>
@@ -496,16 +527,20 @@ function ToolCard({ tool }) {
 
 function Footer() {
   return (
-    <footer className="nexus-container py-20 border-t border-black/5 text-center">
-       <div className="flex items-center justify-center gap-3 mb-6">
-          <div className="h-8 w-8 bg-black flex items-center justify-center rounded-lg">
-             <Command size={16} className="text-white" />
+    <footer className="nexus-container py-24 border-t border-black/5 text-center">
+       <div className="flex items-center justify-center gap-3 mb-8">
+          <div className="h-10 w-10 bg-black flex items-center justify-center rounded-xl shadow-xl">
+             <Command size={20} className="text-white" />
           </div>
-          <span className="font-black tracking-tighter">Free AI Atlas</span>
+          <span className="text-xl font-black tracking-tighter">Free AI Atlas</span>
        </div>
-       <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em]">
-         © 2026 • L'excellence technologique pour tous
+       <p className="text-slate-400 text-[11px] font-bold uppercase tracking-[0.4em] mb-12">
+         Démocratiser la création numérique.
        </p>
+       <div className="flex justify-center gap-8 text-[11px] font-bold uppercase tracking-widest text-slate-500">
+          <a href="#" className="hover:text-black">Confidentialité</a>
+          <a href="#" className="hover:text-black">Éthique</a>
+       </div>
     </footer>
   )
 }
