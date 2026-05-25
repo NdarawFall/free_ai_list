@@ -6,15 +6,14 @@ import {
   ArrowUpRight,
   BookOpenText,
   CheckCircle2,
-  Command,
   Database,
   Filter,
   ImagePlus,
   LayoutDashboard,
   Loader2,
-  LogIn,
   LogOut,
   Plus,
+  Quote,
   Search,
   ShieldCheck,
   Sparkles,
@@ -35,12 +34,15 @@ const PRODUCTION_URL = 'https://freeailist-navy.vercel.app'
 const ADMIN_CHECK_ERROR = 'Verification admin impossible. Regarde la policy app_admins dans Supabase.'
 
 const pages = [
+  { id: 'home', label: 'Accueil', icon: Sparkles },
   { id: 'ai', label: 'IA', icon: Zap },
   { id: 'tools', label: 'Outils', icon: Wrench },
+  { id: 'prompts', label: 'Prompts', icon: Quote },
   { id: 'blog', label: 'Blog', icon: BookOpenText },
 ]
 
 const aiCategories = ['Tous', 'Texte', 'Image', 'Video', 'Musique', 'Autre']
+const appPages = pages.map((page) => page.id)
 
 const fallbackItems = [
   {
@@ -98,6 +100,16 @@ const fallbackItems = [
     tags: ['stack', 'strategie'],
     is_featured: true,
   },
+  {
+    id: 'fallback-prompt-faceless',
+    type: 'prompt',
+    title: 'Script YouTube faceless clair et monétisable',
+    description: 'Transforme une idée brute en script narratif structuré, avec hook, rythme et appel à l’action.',
+    category: 'YouTube',
+    body: 'Agis comme un scénariste YouTube faceless. Crée un script de 900 mots sur [SUJET], avec un hook de 12 secondes, trois parties, exemples concrets et une conclusion qui pousse à commenter.',
+    tags: ['faceless', 'script', 'youtube'],
+    is_featured: true,
+  },
 ]
 
 const emptyForm = {
@@ -127,10 +139,11 @@ function App() {
 
   const visibleItems = useMemo(() => {
     const source = items.length ? items : fallbackItems
-    const type = activePage === 'tools' ? 'tool' : activePage
+    const type = activePage === 'tools' ? 'tool' : activePage === 'prompts' ? 'prompt' : activePage
     const needle = query.trim().toLowerCase()
 
     return source.filter((item) => {
+      if (activePage === 'home') return false
       const matchesType = item.type === type
       const matchesCategory =
         activePage !== 'ai' || category === 'Tous' || normalizeCategory(item.category) === normalizeCategory(category)
@@ -146,6 +159,7 @@ function App() {
     return {
       ai: source.filter((item) => item.type === 'ai').length,
       tools: source.filter((item) => item.type === 'tool').length,
+      prompts: source.filter((item) => item.type === 'prompt').length,
       blog: source.filter((item) => item.type === 'blog').length,
     }
   }, [items])
@@ -206,8 +220,8 @@ function App() {
 
   useEffect(() => {
     function onHashChange() {
-      const next = window.location.hash.replace('#', '') || 'ai'
-      setActivePage(['ai', 'tools', 'blog', 'dashboard'].includes(next) ? next : 'ai')
+      const next = window.location.hash.replace('#', '') || 'home'
+      setActivePage([...appPages, 'dashboard'].includes(next) ? next : 'home')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
@@ -228,8 +242,8 @@ function App() {
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession)
       if (event === 'SIGNED_IN') {
-        window.history.replaceState(null, '', '#ai')
-        setActivePage('ai')
+        window.history.replaceState(null, '', '#home')
+        setActivePage('home')
         showToast('success', 'Connexion Google validée.')
       }
     })
@@ -247,8 +261,8 @@ function App() {
     }
 
     if (activePage === 'dashboard' && !isAdmin) {
-      setActivePage('ai')
-      window.history.replaceState(null, '', '#ai')
+      setActivePage('home')
+      window.history.replaceState(null, '', '#home')
       showToast('warning', 'Accès dashboard réservé à l’admin.')
     }
   }, [activePage, adminChecking, isAdmin, session])
@@ -334,8 +348,8 @@ function App() {
 
   async function signOut() {
     await supabase.auth.signOut()
-    setActivePage('ai')
-    window.history.replaceState(null, '', '#ai')
+    setActivePage('home')
+    window.history.replaceState(null, '', '#home')
     showToast('success', 'Déconnecté.')
   }
 
@@ -410,7 +424,7 @@ function App() {
   }
 
   const currentPage = activePage === 'dashboard'
-    ? (isAdmin ? 'dashboard' : 'ai')
+    ? (isAdmin ? 'dashboard' : 'home')
     : activePage
 
   return (
@@ -419,16 +433,13 @@ function App() {
       <Background />
       <Toast toast={toast} onClose={() => setToast(null)} />
 
-      <header ref={heroRef} className="hero">
+      <header ref={heroRef} className="topbar">
         <nav data-hero className="nav">
-          <button className="brand" onClick={() => goTo('ai')}>
+          <button className="brand" onClick={() => goTo('home')}>
             <span className="brand-mark">
-              <Command size={17} />
+              <Sparkles size={17} />
             </span>
-            <span>
-              <strong>Free AI Atlas</strong>
-              <small>curated free stack</small>
-            </span>
+            <strong>Free AI Atlas</strong>
           </button>
 
           <div className="nav-tabs">
@@ -464,20 +475,20 @@ function App() {
           )}
         </nav>
 
-        {currentPage !== 'dashboard' && (
+        {currentPage === 'home' && (
           <section data-hero className="hero-grid">
             <div>
               <p className="eyebrow">
                 <Sparkles size={15} />
-                Apple-like, rapide, privé, administrable.
+                Pour createurs faceless, freelances et makers africains.
               </p>
-              <h1>Le catalogue premium de ta stack gratuite.</h1>
+              <h1>Des outils vraiment gratuits pour creer sans abonnement lourd.</h1>
               <p className="hero-copy">
-                IA, outils créatifs et notes de veille dans une interface sombre, claire et fluide. Tout est stocké dans Supabase, les images passent par Cloudinary.
+                Free AI Atlas rassemble des IA, plateformes, outils creatifs et prompts qui aident vraiment les createurs a produire sans empiler des abonnements trop chers.
               </p>
               <div className="hero-actions">
                 <button className="primary-action" onClick={() => document.getElementById('content')?.scrollIntoView({ behavior: 'smooth' })}>
-                  Explorer <ArrowUpRight size={16} />
+                  Voir les ressources <ArrowUpRight size={16} />
                 </button>
                 {isAdmin && (
                   <button className="ghost-action" onClick={() => goTo('dashboard')}>
@@ -487,7 +498,7 @@ function App() {
               </div>
             </div>
 
-            <aside className="hero-panel">
+            <aside className="hero-panel home-panel">
               <div className="panel-row">
                 <span>Contenus</span>
                 <strong>{counts.ai + counts.tools + counts.blog}</strong>
@@ -507,7 +518,9 @@ function App() {
       </header>
 
       <section id="content" className="page-wrap">
-        {currentPage === 'dashboard' && isAdmin ? (
+        {currentPage === 'home' ? (
+          <HomePage goTo={goTo} isAdmin={isAdmin} />
+        ) : currentPage === 'dashboard' && isAdmin ? (
           <Dashboard items={items} onCreate={createItem} onDelete={deleteItem} loading={loading} />
         ) : (
           <ContentPage
@@ -529,7 +542,7 @@ function App() {
 
 function getInitialPage() {
   const hash = window.location.hash.replace('#', '')
-  return ['ai', 'tools', 'blog', 'dashboard'].includes(hash) ? hash : 'ai'
+  return [...appPages, 'dashboard'].includes(hash) ? hash : 'home'
 }
 
 function normalizeCategory(value) {
@@ -543,7 +556,7 @@ function Loader() {
   return (
     <div className="loader-screen">
       <div className="loader-core">
-        <Command size={24} />
+        <Sparkles size={24} />
       </div>
       <p>Préparation de l’atlas</p>
     </div>
@@ -589,6 +602,51 @@ function Metric({ label, value }) {
   )
 }
 
+function HomePage({ goTo, isAdmin }) {
+  const promises = [
+    'Des sites qui servent vraiment sans carte bancaire.',
+    'Des prompts prets pour script, miniature, montage et recherche.',
+    'Une selection pensee pour les createurs qui doivent produire vite avec peu de budget.',
+  ]
+
+  return (
+    <div className="home-content">
+      <section data-reveal className="mission-band">
+        <span>Pourquoi ce site existe</span>
+        <h2>Parce que trop de createurs perdent du temps sur des faux plans gratuits.</h2>
+        <p>
+          Dans les groupes de createurs faceless, beaucoup cherchent les memes ressources : IA gratuites,
+          plateformes utiles, outils de creation, prompts et alternatives aux abonnements trop couteux.
+          Free AI Atlas centralise ces trouvailles dans un endroit simple, propre et maintenu.
+        </p>
+      </section>
+
+      <div className="promise-grid">
+        {promises.map((promise) => (
+          <article data-reveal className="promise-card" key={promise}>
+            <CheckCircle2 size={18} />
+            <p>{promise}</p>
+          </article>
+        ))}
+      </div>
+
+      <section data-reveal className="path-panel">
+        <div>
+          <span>Explorer</span>
+          <h2>Choisis ce dont tu as besoin maintenant.</h2>
+        </div>
+        <div className="path-grid">
+          <button onClick={() => goTo('ai')}>IA gratuites <ArrowUpRight size={16} /></button>
+          <button onClick={() => goTo('tools')}>Outils createurs <ArrowUpRight size={16} /></button>
+          <button onClick={() => goTo('prompts')}>Prompts <ArrowUpRight size={16} /></button>
+          <button onClick={() => goTo('blog')}>Guides <ArrowUpRight size={16} /></button>
+          {isAdmin && <button onClick={() => goTo('dashboard')}>Ajouter <Plus size={16} /></button>}
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function ContentPage({ activePage, category, items, loading, onCategoryChange, onDelete, onQueryChange, query, isAdmin }) {
   const pageConfig = {
     ai: {
@@ -600,6 +658,11 @@ function ContentPage({ activePage, category, items, loading, onCategoryChange, o
       label: 'Outils',
       title: 'Outils créatifs hors IA.',
       copy: 'Design, code, vidéo, productivité : tout ce qui aide à créer plus vite sans dépendre d’un modèle IA.',
+    },
+    prompts: {
+      label: 'Prompts',
+      title: 'Prompts prets pour produire plus vite.',
+      copy: 'Scripts, idees, miniatures, recherche, montage : des prompts reutilisables pour les createurs faceless et makers.',
     },
     blog: {
       label: 'Blog',
@@ -675,7 +738,7 @@ function ContentCard({ item, isAdmin, onDelete }) {
         <span className="category-label">{item.category}</span>
         <h3>{item.title}</h3>
         <p>{item.description}</p>
-        {item.type === 'blog' && item.body && <p className="blog-body">{item.body}</p>}
+        {['blog', 'prompt'].includes(item.type) && item.body && <p className="blog-body">{item.body}</p>}
         <div className="tags">
           {(item.tags || []).map((tag) => <small key={tag}>{tag}</small>)}
         </div>
@@ -685,7 +748,7 @@ function ContentCard({ item, isAdmin, onDelete }) {
               Ouvrir <ArrowUpRight size={15} />
             </a>
           ) : (
-            <span>Article</span>
+            <span>{item.type === 'prompt' ? 'Prompt' : 'Article'}</span>
           )}
           {isAdmin && (
             <button disabled={deleting} onClick={handleDelete}>
@@ -704,7 +767,7 @@ function Dashboard({ items, onCreate, onDelete, loading }) {
       <div data-reveal className="section-head">
         <div>
           <span>Dashboard</span>
-          <h2>Ajouter IA, outils et articles.</h2>
+          <h2>Ajouter IA, outils, prompts et articles.</h2>
         </div>
         <p>Upload Cloudinary, insertion Supabase, puis publication immédiate sur les pages publiques.</p>
       </div>
@@ -772,6 +835,7 @@ function AdminForm({ onCreate }) {
         <Field label="Type" kind="select" value={form.type} onChange={(value) => update('type', value)}>
           <option value="ai">IA</option>
           <option value="tool">Outil</option>
+          <option value="prompt">Prompt</option>
           <option value="blog">Blog</option>
         </Field>
         <Field label="Titre" value={form.title} onChange={(value) => update('title', value)} required />

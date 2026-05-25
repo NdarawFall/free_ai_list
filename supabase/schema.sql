@@ -147,7 +147,7 @@ on conflict do nothing;
 
 create table if not exists public.content_items (
   id uuid primary key default gen_random_uuid(),
-  type text not null check (type in ('ai', 'tool', 'blog')),
+  type text not null check (type in ('ai', 'tool', 'blog', 'prompt')),
   title text not null,
   description text not null,
   url text,
