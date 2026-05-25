@@ -72,7 +72,7 @@
   }
 
   .nav {
-    @apply sticky top-3 z-40 grid grid-cols-[1fr_auto_auto] items-center gap-2 rounded-2xl border border-white/10 bg-zinc-950/[0.78] p-2 shadow-2xl backdrop-blur-2xl md:flex md:flex-wrap md:justify-between md:gap-3;
+    @apply sticky top-3 z-40 grid grid-cols-[1fr_auto] items-center gap-2 rounded-2xl border border-white/10 bg-zinc-950/[0.78] p-2 shadow-2xl backdrop-blur-2xl md:flex md:flex-wrap md:justify-between md:gap-3;
   }
 
   .brand {
@@ -92,16 +92,16 @@
   }
 
   .nav-tabs {
-    @apply col-span-3 grid max-h-0 w-full gap-2 overflow-hidden rounded-2xl border border-transparent opacity-0 transition-all duration-300 ease-out md:order-none md:col-span-1 md:flex md:max-h-none md:w-auto md:overflow-x-auto md:rounded-none md:border-0 md:opacity-100;
+    @apply col-span-2 grid max-h-0 w-full gap-2 overflow-hidden rounded-2xl opacity-0 transition-all duration-300 ease-out md:order-none md:col-span-1 md:flex md:max-h-none md:w-auto md:overflow-x-auto md:rounded-none md:opacity-100;
   }
 
   .nav-tabs.open {
-    @apply mt-2 max-h-[26rem] border-white/10 bg-black/20 p-2 opacity-100;
+    @apply mt-2 max-h-[28rem] bg-black/20 p-2 opacity-100;
   }
 
   .nav-tab,
   .auth-button {
-    @apply inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-4 text-xs font-bold text-white/[0.62] transition hover:border-cyan-300/40 hover:bg-white/10 hover:text-white;
+    @apply inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-4 text-xs font-bold text-white/[0.62] outline-none transition hover:border-cyan-300/40 hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/15;
   }
 
   .nav-tab {
@@ -113,23 +113,23 @@
   }
 
   .google-button {
-    @apply inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-white px-3 text-xs font-bold text-zinc-900 shadow-lg transition hover:scale-[1.02] hover:bg-slate-100 sm:px-4;
+    @apply inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-white px-4 text-xs font-bold text-zinc-900 shadow-lg outline-none transition hover:scale-[1.02] hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-white/20;
   }
 
   .google-button svg {
     @apply h-4 w-4;
   }
 
-  .nav-auth {
-    @apply justify-self-end;
+  .desktop-auth {
+    @apply hidden md:inline-flex;
   }
 
-  .auth-label {
-    @apply hidden sm:inline;
+  .mobile-menu-auth {
+    @apply flex w-full justify-start rounded-2xl md:hidden;
   }
 
   .menu-toggle {
-    @apply inline-grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.06] text-white/70 transition hover:border-cyan-300/40 hover:text-white md:hidden;
+    @apply inline-grid h-10 w-10 place-items-center justify-self-end rounded-full border border-white/10 bg-white/[0.06] text-white/70 outline-none transition hover:border-white/20 hover:text-white focus-visible:ring-2 focus-visible:ring-white/15 md:hidden;
   }
 
   .menu-toggle.active {

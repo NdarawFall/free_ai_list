@@ -496,15 +496,24 @@ function App() {
                 Dashboard
               </button>
             )}
+            {session ? (
+              <button className="auth-button mobile-menu-auth" onClick={signOut}>
+                <LogOut size={16} /> Sortir
+              </button>
+            ) : (
+              <button className="google-button mobile-menu-auth" onClick={signIn}>
+                <GoogleIcon /> Se connecter avec Google
+              </button>
+            )}
           </div>
 
           {session ? (
-            <button className="auth-button nav-auth" onClick={signOut}>
-              <LogOut size={16} /> <span className="auth-label">Sortir</span>
+            <button className="auth-button desktop-auth" onClick={signOut}>
+              <LogOut size={16} /> Sortir
             </button>
           ) : (
-            <button className="google-button nav-auth" onClick={signIn}>
-              <GoogleIcon /> <span className="auth-label">Se connecter avec Google</span>
+            <button className="google-button desktop-auth" onClick={signIn}>
+              <GoogleIcon /> Se connecter avec Google
             </button>
           )}
         </nav>
