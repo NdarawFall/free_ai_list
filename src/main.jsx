@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   Loader2,
   LogOut,
+  Menu,
   Plus,
   Quote,
   Search,
@@ -135,6 +136,7 @@ function App() {
   const [category, setCategory] = useState('Tous')
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
+  const [menuOpen, setMenuOpen] = useState(false)
   const heroRef = useRef(null)
   const authToastShownRef = useRef(false)
 
@@ -338,6 +340,7 @@ function App() {
   }
 
   async function signIn() {
+    setMenuOpen(false)
     const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname)
     const redirectTo = isLocalhost ? window.location.origin : PRODUCTION_URL
     const { error } = await supabase.auth.signInWithOAuth({
@@ -354,6 +357,7 @@ function App() {
   async function signOut() {
     await supabase.auth.signOut()
     authToastShownRef.current = false
+    setMenuOpen(false)
     setActivePage('home')
     window.history.replaceState(null, '', '#home')
     showToast('success', 'Déconnecté.')
@@ -424,6 +428,7 @@ function App() {
     window.location.hash = page
     setActivePage(page)
     setDetailTarget(null)
+    setMenuOpen(false)
   }
 
   function openItem(item) {
@@ -462,7 +467,16 @@ function App() {
             <strong>Free AI Atlas</strong>
           </button>
 
-          <div className="nav-tabs">
+          <button
+            className={menuOpen ? 'menu-toggle active' : 'menu-toggle'}
+            onClick={() => setMenuOpen((current) => !current)}
+            aria-expanded={menuOpen}
+            aria-label="Ouvrir le menu"
+          >
+            <Menu size={18} />
+          </button>
+
+          <div className={menuOpen ? 'nav-tabs open' : 'nav-tabs'}>
             {pages.map((page) => (
               <button
                 key={page.id}
@@ -485,12 +499,12 @@ function App() {
           </div>
 
           {session ? (
-            <button className="auth-button" onClick={signOut}>
-              <LogOut size={16} /> Sortir
+            <button className="auth-button nav-auth" onClick={signOut}>
+              <LogOut size={16} /> <span className="auth-label">Sortir</span>
             </button>
           ) : (
-            <button className="google-button" onClick={signIn}>
-              <GoogleIcon /> Se connecter avec Google
+            <button className="google-button nav-auth" onClick={signIn}>
+              <GoogleIcon /> <span className="auth-label">Se connecter avec Google</span>
             </button>
           )}
         </nav>
@@ -590,6 +604,29 @@ function normalizeCategory(value) {
     ?.normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
+}
+
+function optimizeImageUrl(url, width = 900) {
+  if (!url) return ''
+
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname.includes('res.cloudinary.com') && parsed.pathname.includes('/upload/')) {
+      return url.replace('/upload/', `/upload/f_auto,q_auto,c_fill,w_${width}/`)
+    }
+
+    if (parsed.hostname.includes('images.unsplash.com')) {
+      parsed.searchParams.set('auto', 'format')
+      parsed.searchParams.set('fit', 'crop')
+      parsed.searchParams.set('w', String(width))
+      parsed.searchParams.set('q', '72')
+      return parsed.toString()
+    }
+  } catch {
+    return url
+  }
+
+  return url
 }
 
 function Background() {
@@ -784,14 +821,22 @@ function ContentPage({ activePage, category, items, loading, onCategoryChange, o
         </label>
 
         {activePage === 'ai' && (
-          <div className="filters">
-            <Filter size={16} />
-            {aiCategories.map((item) => (
-              <button key={item} className={category === item ? 'filter active' : 'filter'} onClick={() => onCategoryChange(item)}>
-                {item}
-              </button>
-            ))}
-          </div>
+          <>
+            <label className="filter-select">
+              <Filter size={16} />
+              <select value={category} onChange={(event) => onCategoryChange(event.target.value)}>
+                {aiCategories.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </label>
+            <div className="filters">
+              <Filter size={16} />
+              {aiCategories.map((item) => (
+                <button key={item} className={category === item ? 'filter active' : 'filter'} onClick={() => onCategoryChange(item)}>
+                  {item}
+                </button>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -838,7 +883,7 @@ function ContentCard({ item, isAdmin, onDelete, onOpen }) {
       if (event.key === 'Enter') handleOpen()
     }}>
       <div className="media-frame">
-        {item.image_url ? <img src={item.image_url} alt="" /> : <div className="image-placeholder"><ImagePlus size={22} /></div>}
+        {item.image_url ? <img src={optimizeImageUrl(item.image_url, 760)} alt="" loading="lazy" decoding="async" /> : <div className="image-placeholder"><ImagePlus size={22} /></div>}
         {item.is_featured && <span className="featured-badge"><CheckCircle2 size={14} /> Sélection</span>}
       </div>
       <div className="card-body">
@@ -883,7 +928,7 @@ function DetailPage({ item, goTo }) {
 
       {item.image_url && (
         <div className="detail-cover">
-          <img src={item.image_url} alt="" />
+          <img src={optimizeImageUrl(item.image_url, 1440)} alt="" loading="lazy" decoding="async" />
         </div>
       )}
 
