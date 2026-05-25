@@ -7,6 +7,7 @@
 @layer base {
   body {
     @apply bg-slate-950 font-sans text-slate-100 antialiased;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
@@ -92,11 +93,11 @@
   }
 
   .nav-tabs {
-    @apply col-span-2 grid max-h-0 w-full gap-2 overflow-hidden rounded-2xl opacity-0 transition-all duration-300 ease-out md:order-none md:col-span-1 md:flex md:max-h-none md:w-auto md:overflow-x-auto md:rounded-none md:opacity-100;
+    @apply col-span-2 grid max-h-0 w-full gap-0 overflow-hidden rounded-2xl opacity-0 transition-[max-height,opacity,margin,padding] duration-200 ease-in-out md:order-none md:col-span-1 md:flex md:max-h-none md:w-auto md:overflow-x-auto md:rounded-none md:opacity-100 md:gap-2;
   }
 
   .nav-tabs.open {
-    @apply mt-2 max-h-[28rem] bg-black/20 p-2 opacity-100;
+    @apply mt-2 max-h-[30rem] bg-black/20 p-2 opacity-100;
   }
 
   .nav-tab,
