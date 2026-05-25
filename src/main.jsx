@@ -32,6 +32,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey)
 const CLOUDINARY_CLOUD_NAME = 'dkvympjyk'
 const CLOUDINARY_UPLOAD_PRESET = 'free_ai_list_unsigned'
 const PRODUCTION_URL = 'https://freeailist-navy.vercel.app'
+const ADMIN_CHECK_ERROR = 'Verification admin impossible. Regarde la policy app_admins dans Supabase.'
 
 const pages = [
   { id: 'ai', label: 'IA', icon: Zap },
@@ -115,6 +116,7 @@ function App() {
   const [items, setItems] = useState([])
   const [session, setSession] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [adminChecking, setAdminChecking] = useState(false)
   const [activePage, setActivePage] = useState(getInitialPage())
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('Tous')
@@ -214,10 +216,23 @@ function App() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        showToast('error', 'Session Supabase introuvable.')
+        return
+      }
+      setSession(data.session)
+    })
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      setSession(nextSession)
+      if (event === 'SIGNED_IN') {
+        window.history.replaceState(null, '', '#ai')
+        setActivePage('ai')
+        showToast('success', 'Connexion Google validée.')
+      }
+    })
 
     return () => subscription.unsubscribe()
   }, [])
@@ -227,12 +242,16 @@ function App() {
   }, [session])
 
   useEffect(() => {
+    if (activePage === 'dashboard' && session && adminChecking) {
+      return
+    }
+
     if (activePage === 'dashboard' && !isAdmin) {
       setActivePage('ai')
       window.history.replaceState(null, '', '#ai')
       showToast('warning', 'Accès dashboard réservé à l’admin.')
     }
-  }, [activePage, isAdmin])
+  }, [activePage, adminChecking, isAdmin, session])
 
   useEffect(() => {
     loadContent()
@@ -263,26 +282,54 @@ function App() {
   async function checkAdmin(currentSession) {
     if (!currentSession?.user?.email) {
       setIsAdmin(false)
+      setAdminChecking(false)
+      return
+    }
+
+    setAdminChecking(true)
+    const email = currentSession.user.email.trim().toLowerCase()
+
+    const { data: rpcData, error: rpcError } = await supabase.rpc('is_current_admin')
+    if (!rpcError && typeof rpcData === 'boolean') {
+      setIsAdmin(rpcData)
+      if (!rpcData) {
+        showToast('warning', `${email} est connecté, mais absent de app_admins.`)
+      }
+      setAdminChecking(false)
       return
     }
 
     const { data, error } = await supabase
       .from('app_admins')
       .select('email')
-      .eq('email', currentSession.user.email.toLowerCase())
+      .eq('email', email)
       .maybeSingle()
 
-    setIsAdmin(Boolean(data && !error))
+    if (error) {
+      setIsAdmin(false)
+      showToast('error', ADMIN_CHECK_ERROR)
+    } else {
+      const allowed = Boolean(data)
+      setIsAdmin(allowed)
+      if (!allowed) {
+        showToast('warning', `${email} est connecté, mais absent de app_admins.`)
+      }
+    }
+    setAdminChecking(false)
   }
 
   async function signIn() {
     const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname)
-    await supabase.auth.signInWithOAuth({
+    const redirectTo = isLocalhost ? window.location.origin : PRODUCTION_URL
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: isLocalhost ? window.location.origin : `${PRODUCTION_URL}/#ai`,
+        redirectTo,
       },
     })
+    if (error) {
+      showToast('error', 'Google OAuth a refusé la connexion.')
+    }
   }
 
   async function signOut() {

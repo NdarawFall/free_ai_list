@@ -34,6 +34,19 @@ grant usage on schema app_private to authenticated;
 grant execute on function app_private.is_admin() to authenticated;
 grant select on public.app_admins to authenticated;
 
+create or replace function public.is_current_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select app_private.is_admin();
+$$;
+
+revoke all on function public.is_current_admin() from public;
+grant execute on function public.is_current_admin() to authenticated;
+
 drop policy if exists "Admins can read admin emails" on public.app_admins;
 create policy "Admins can read admin emails"
 on public.app_admins
