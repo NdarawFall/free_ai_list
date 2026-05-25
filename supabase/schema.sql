@@ -131,3 +131,58 @@ values
   ('Hugging Face Spaces', 'Tester des demos IA open source dans le navigateur.', 'Open source', 'https://huggingface.co/spaces', 'Gratuit avec limites', array['open-source', 'demo', 'modeles'], false),
   ('Ideogram', 'Generation d''images avec rendu typographique solide.', 'Image', 'https://ideogram.ai', 'Credits gratuits', array['image', 'design'], false)
 on conflict do nothing;
+
+create table if not exists public.content_items (
+  id uuid primary key default gen_random_uuid(),
+  type text not null check (type in ('ai', 'tool', 'blog')),
+  title text not null,
+  description text not null,
+  url text,
+  category text not null default 'Autre',
+  image_url text,
+  body text,
+  tags text[] not null default '{}',
+  is_featured boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.content_items enable row level security;
+
+drop policy if exists "Public can read content items" on public.content_items;
+create policy "Public can read content items"
+on public.content_items
+for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "Admins can insert content items" on public.content_items;
+create policy "Admins can insert content items"
+on public.content_items
+for insert
+to authenticated
+with check (app_private.is_admin());
+
+drop policy if exists "Admins can update content items" on public.content_items;
+create policy "Admins can update content items"
+on public.content_items
+for update
+to authenticated
+using (app_private.is_admin())
+with check (app_private.is_admin());
+
+drop policy if exists "Admins can delete content items" on public.content_items;
+create policy "Admins can delete content items"
+on public.content_items
+for delete
+to authenticated
+using (app_private.is_admin());
+
+grant select on public.content_items to anon;
+grant select, insert, update, delete on public.content_items to authenticated;
+
+drop trigger if exists set_content_items_updated_at on public.content_items;
+create trigger set_content_items_updated_at
+before update on public.content_items
+for each row
+execute function public.set_updated_at();
