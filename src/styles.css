@@ -97,7 +97,7 @@
   }
 
   .nav-tabs.open {
-    @apply mt-2 max-h-[30rem] bg-black/20 p-2 opacity-100;
+    @apply mt-2 max-h-[30rem] flex flex-col gap-2 bg-black/20 p-2 opacity-100;
   }
 
   .nav-tab,
@@ -110,7 +110,7 @@
   }
 
   .nav-tab.active {
-    @apply border-white/20 bg-white text-slate-950 hover:text-slate-950;
+    @apply border-blue-500/50 bg-blue-600 text-white hover:text-white;
   }
 
   .google-button {

@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Database,
   Filter,
+  Home,
   ImagePlus,
   LayoutDashboard,
   Loader2,
@@ -35,7 +36,7 @@ const PRODUCTION_URL = 'https://freeailist-navy.vercel.app'
 const ADMIN_CHECK_ERROR = 'Verification admin impossible. Regarde la policy app_admins dans Supabase.'
 
 const pages = [
-  { id: 'home', label: 'Accueil', icon: Sparkles },
+  { id: 'home', label: 'Accueil', icon: Home },
   { id: 'ai', label: 'IA', icon: Zap },
   { id: 'tools', label: 'Outils', icon: Wrench },
   { id: 'prompts', label: 'Prompts', icon: Quote },
