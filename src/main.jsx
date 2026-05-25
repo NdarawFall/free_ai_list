@@ -134,9 +134,9 @@ function App() {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('Tous')
   const [loading, setLoading] = useState(true)
-  const [booting, setBooting] = useState(true)
   const [toast, setToast] = useState(null)
   const heroRef = useRef(null)
+  const authToastShownRef = useRef(false)
 
   const visibleItems = useMemo(() => {
     const source = items.length ? items : fallbackItems
@@ -170,11 +170,6 @@ function App() {
     const source = items.length ? items : fallbackItems
     return source.find((item) => item.id === detailTarget.id && item.type === detailTarget.type) || null
   }, [detailTarget, items])
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => setBooting(false), 950)
-    return () => window.clearTimeout(timeout)
-  }, [])
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -244,12 +239,14 @@ function App() {
         return
       }
       setSession(data.session)
+      authToastShownRef.current = Boolean(data.session)
     })
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession)
-      if (event === 'SIGNED_IN') {
+      if (event === 'SIGNED_IN' && !authToastShownRef.current) {
+        authToastShownRef.current = true
         window.history.replaceState(null, '', '#home')
         setActivePage('home')
         showToast('success', 'Connexion Google validée.')
@@ -356,6 +353,7 @@ function App() {
 
   async function signOut() {
     await supabase.auth.signOut()
+    authToastShownRef.current = false
     setActivePage('home')
     window.history.replaceState(null, '', '#home')
     showToast('success', 'Déconnecté.')
@@ -452,7 +450,6 @@ function App() {
 
   return (
     <main className="site-shell">
-      {booting && <Loader />}
       <Background />
       <Toast toast={toast} onClose={() => setToast(null)} />
 
@@ -595,17 +592,6 @@ function normalizeCategory(value) {
     .toLowerCase()
 }
 
-function Loader() {
-  return (
-    <div className="loader-screen">
-      <div className="loader-core">
-        <Sparkles size={24} />
-      </div>
-      <p>Préparation de l’atlas</p>
-    </div>
-  )
-}
-
 function Background() {
   return (
     <div className="background" aria-hidden="true">
@@ -646,44 +632,109 @@ function Metric({ label, value }) {
 }
 
 function HomePage({ goTo, isAdmin }) {
-  const promises = [
-    'Des sites qui servent vraiment sans carte bancaire.',
-    'Des prompts prets pour script, miniature, montage et recherche.',
-    'Une selection pensee pour les createurs qui doivent produire vite avec peu de budget.',
+  const collections = [
+    { title: 'IA gratuites', copy: 'Modeles et services utiles pour ecrire, chercher, generer ou organiser sans commencer par payer.', action: 'Explorer les IA', page: 'ai' },
+    { title: 'Outils createurs', copy: 'Plateformes de design, montage, publication et productivite qui aident a produire concretement.', action: 'Voir les outils', page: 'tools' },
+    { title: 'Prompts', copy: 'Instructions pretes a adapter pour scripts faceless, idees de videos, miniatures et workflows.', action: 'Lire les prompts', page: 'prompts' },
+    { title: 'Guides', copy: 'Notes courtes pour comprendre quoi utiliser, dans quel ordre, et eviter les fausses bonnes idees.', action: 'Lire le blog', page: 'blog' },
+  ]
+
+  const standards = [
+    'Un vrai usage gratuit ou une valeur claire avant paiement.',
+    'Un interet concret pour un createur qui produit avec peu de budget.',
+    'Une fiche courte, lisible, et facile a ouvrir depuis le catalogue.',
+  ]
+
+  const workflows = [
+    'Trouver une IA gratuite pour ecrire ou chercher.',
+    'Passer sur un outil pour creer le visuel, la video ou le support.',
+    'Utiliser un prompt pour gagner du temps sur la structure.',
+    'Garder les meilleurs liens au meme endroit au lieu de fouiller des groupes.',
   ]
 
   return (
     <div className="home-content">
-      <section data-reveal className="mission-band">
-        <span>Pourquoi ce site existe</span>
-        <h2>Parce que trop de createurs perdent du temps sur des faux plans gratuits.</h2>
+      <section data-reveal className="mission-band home-statement">
+        <span>Le probleme</span>
+        <h2>Les createurs perdent trop de temps a chercher des outils gratuits qui tiennent vraiment la route.</h2>
         <p>
-          Dans les groupes de createurs faceless, beaucoup cherchent les memes ressources : IA gratuites,
-          plateformes utiles, outils de creation, prompts et alternatives aux abonnements trop couteux.
-          Free AI Atlas centralise ces trouvailles dans un endroit simple, propre et maintenu.
+          Dans les groupes de YouTubeurs faceless en Afrique, la question revient souvent : ou trouver des IA,
+          plateformes et outils fiables sans abonnement lourd ? Free AI Atlas sert de point de depart propre pour
+          eviter les listes confuses, les essais inutiles et les plans gratuits trop limites.
         </p>
+        <div className="home-actions">
+          <button className="primary-action" onClick={() => goTo('ai')}>Commencer par les IA <ArrowUpRight size={16} /></button>
+          <button className="ghost-action" onClick={() => goTo('prompts')}>Voir les prompts <ArrowUpRight size={16} /></button>
+          {isAdmin && <button className="ghost-action" onClick={() => goTo('dashboard')}>Ajouter une ressource <Plus size={16} /></button>}
+        </div>
       </section>
 
-      <div className="promise-grid">
-        {promises.map((promise) => (
-          <article data-reveal className="promise-card" key={promise}>
-            <CheckCircle2 size={18} />
-            <p>{promise}</p>
-          </article>
-        ))}
-      </div>
-
-      <section data-reveal className="path-panel">
-        <div>
-          <span>Explorer</span>
-          <h2>Choisis ce dont tu as besoin maintenant.</h2>
+      <section data-reveal className="editorial-grid">
+        <div className="editorial-copy">
+          <span>La promesse</span>
+          <h2>Pas une encyclopedie. Une selection lisible pour avancer.</h2>
+          <p>
+            Le but n'est pas de promettre que tout est magique ou illimite. Le but est de rassembler les ressources
+            qui peuvent vraiment aider un createur a tester, produire, apprendre et publier avec un budget serre.
+          </p>
         </div>
-        <div className="path-grid">
-          <button onClick={() => goTo('ai')}>IA gratuites <ArrowUpRight size={16} /></button>
-          <button onClick={() => goTo('tools')}>Outils createurs <ArrowUpRight size={16} /></button>
-          <button onClick={() => goTo('prompts')}>Prompts <ArrowUpRight size={16} /></button>
-          <button onClick={() => goTo('blog')}>Guides <ArrowUpRight size={16} /></button>
-          {isAdmin && <button onClick={() => goTo('dashboard')}>Ajouter <Plus size={16} /></button>}
+        <div className="standard-list">
+          {standards.map((standard) => (
+            <div className="standard-row" key={standard}>
+              <CheckCircle2 size={18} />
+              <p>{standard}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section data-reveal className="collection-section">
+        <div className="section-kicker">
+          <span>Collections</span>
+          <h2>Chaque page a un role simple.</h2>
+        </div>
+        <div className="collection-grid">
+          {collections.map((item) => (
+            <article className="collection-card" key={item.title}>
+              <h3>{item.title}</h3>
+              <p>{item.copy}</p>
+              <button onClick={() => goTo(item.page)}>{item.action} <ArrowUpRight size={16} /></button>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section data-reveal className="workflow-section">
+        <div>
+          <span>Usage concret</span>
+          <h2>Un chemin simple pour produire sans se disperser.</h2>
+        </div>
+        <div className="workflow-list">
+          {workflows.map((step, index) => (
+            <div className="workflow-row" key={step}>
+              <strong>{String(index + 1).padStart(2, '0')}</strong>
+              <p>{step}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section data-reveal className="audience-section">
+        <span>Pour qui</span>
+        <h2>Pense pour ceux qui doivent creer avec peu de marge.</h2>
+        <div className="audience-grid">
+          <article>
+            <h3>Createurs faceless</h3>
+            <p>Trouver des outils pour idees, scripts, voix, visuels, montage et organisation.</p>
+          </article>
+          <article>
+            <h3>Freelances & makers</h3>
+            <p>Construire une petite stack gratuite pour livrer vite sans multiplier les frais fixes.</p>
+          </article>
+          <article>
+            <h3>Debutants</h3>
+            <p>Eviter les listes interminables et commencer par des ressources comprehensibles.</p>
+          </article>
         </div>
       </section>
     </div>
