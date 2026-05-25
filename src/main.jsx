@@ -130,6 +130,7 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminChecking, setAdminChecking] = useState(false)
   const [activePage, setActivePage] = useState(getInitialPage())
+  const [detailTarget, setDetailTarget] = useState(getInitialDetailTarget())
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('Tous')
   const [loading, setLoading] = useState(true)
@@ -163,6 +164,12 @@ function App() {
       blog: source.filter((item) => item.type === 'blog').length,
     }
   }, [items])
+
+  const detailItem = useMemo(() => {
+    if (!detailTarget) return null
+    const source = items.length ? items : fallbackItems
+    return source.find((item) => item.id === detailTarget.id && item.type === detailTarget.type) || null
+  }, [detailTarget, items])
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setBooting(false), 950)
@@ -220,8 +227,9 @@ function App() {
 
   useEffect(() => {
     function onHashChange() {
-      const next = window.location.hash.replace('#', '') || 'home'
-      setActivePage([...appPages, 'dashboard'].includes(next) ? next : 'home')
+      const route = parseRoute()
+      setActivePage(route.page)
+      setDetailTarget(route.detail)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
@@ -417,6 +425,21 @@ function App() {
     }
     window.location.hash = page
     setActivePage(page)
+    setDetailTarget(null)
+  }
+
+  function openItem(item) {
+    if (['blog', 'prompt'].includes(item.type)) {
+      const nextHash = `detail:${item.type}:${item.id}`
+      window.location.hash = nextHash
+      setActivePage('detail')
+      setDetailTarget({ type: item.type, id: item.id })
+      return
+    }
+
+    if (item.url) {
+      window.open(item.url, '_blank', 'noopener,noreferrer')
+    }
   }
 
   function showToast(type, message) {
@@ -520,6 +543,8 @@ function App() {
       <section id="content" className="page-wrap">
         {currentPage === 'home' ? (
           <HomePage goTo={goTo} isAdmin={isAdmin} />
+        ) : currentPage === 'detail' ? (
+          <DetailPage item={detailItem} goTo={goTo} />
         ) : currentPage === 'dashboard' && isAdmin ? (
           <Dashboard items={items} onCreate={createItem} onDelete={deleteItem} loading={loading} />
         ) : (
@@ -530,6 +555,7 @@ function App() {
             loading={loading}
             onCategoryChange={setCategory}
             onDelete={deleteItem}
+            onOpen={openItem}
             onQueryChange={setQuery}
             query={query}
             isAdmin={isAdmin}
@@ -541,8 +567,25 @@ function App() {
 }
 
 function getInitialPage() {
+  return parseRoute().page
+}
+
+function getInitialDetailTarget() {
+  return parseRoute().detail
+}
+
+function parseRoute() {
   const hash = window.location.hash.replace('#', '')
-  return [...appPages, 'dashboard'].includes(hash) ? hash : 'home'
+  if (hash.startsWith('detail:')) {
+    const [, type, id] = hash.split(':')
+    if (['blog', 'prompt'].includes(type) && id) {
+      return { page: 'detail', detail: { type, id } }
+    }
+  }
+  return {
+    page: [...appPages, 'dashboard'].includes(hash) ? hash : 'home',
+    detail: null,
+  }
 }
 
 function normalizeCategory(value) {
@@ -647,7 +690,7 @@ function HomePage({ goTo, isAdmin }) {
   )
 }
 
-function ContentPage({ activePage, category, items, loading, onCategoryChange, onDelete, onQueryChange, query, isAdmin }) {
+function ContentPage({ activePage, category, items, loading, onCategoryChange, onDelete, onOpen, onQueryChange, query, isAdmin }) {
   const pageConfig = {
     ai: {
       label: 'IA',
@@ -706,7 +749,7 @@ function ContentPage({ activePage, category, items, loading, onCategoryChange, o
       ) : items.length ? (
         <div className={activePage === 'blog' ? 'content-grid blog-grid' : 'content-grid'}>
           {items.map((item) => (
-            <ContentCard key={item.id} item={item} isAdmin={isAdmin} onDelete={onDelete} />
+            <ContentCard key={item.id} item={item} isAdmin={isAdmin} onDelete={onDelete} onOpen={onOpen} />
           ))}
         </div>
       ) : (
@@ -716,10 +759,11 @@ function ContentPage({ activePage, category, items, loading, onCategoryChange, o
   )
 }
 
-function ContentCard({ item, isAdmin, onDelete }) {
+function ContentCard({ item, isAdmin, onDelete, onOpen }) {
   const [deleting, setDeleting] = useState(false)
 
-  async function handleDelete() {
+  async function handleDelete(event) {
+    event.stopPropagation()
     setDeleting(true)
     try {
       await onDelete(item.id)
@@ -728,8 +772,20 @@ function ContentCard({ item, isAdmin, onDelete }) {
     }
   }
 
+  function handleOpen() {
+    onOpen(item)
+  }
+
+  const actionLabel = ['blog', 'prompt'].includes(item.type)
+    ? 'Lire'
+    : item.url
+      ? 'Ouvrir'
+      : 'Indisponible'
+
   return (
-    <article data-reveal className="content-card">
+    <article data-reveal className="content-card clickable-card" onClick={handleOpen} role="button" tabIndex={0} onKeyDown={(event) => {
+      if (event.key === 'Enter') handleOpen()
+    }}>
       <div className="media-frame">
         {item.image_url ? <img src={item.image_url} alt="" /> : <div className="image-placeholder"><ImagePlus size={22} /></div>}
         {item.is_featured && <span className="featured-badge"><CheckCircle2 size={14} /> Sélection</span>}
@@ -743,19 +799,60 @@ function ContentCard({ item, isAdmin, onDelete }) {
           {(item.tags || []).map((tag) => <small key={tag}>{tag}</small>)}
         </div>
         <div className="card-footer">
-          {item.url ? (
-            <a href={item.url} target="_blank" rel="noreferrer">
-              Ouvrir <ArrowUpRight size={15} />
-            </a>
-          ) : (
-            <span>{item.type === 'prompt' ? 'Prompt' : 'Article'}</span>
-          )}
+          <span className="card-action-label">{actionLabel} <ArrowUpRight size={15} /></span>
           {isAdmin && (
             <button disabled={deleting} onClick={handleDelete}>
               <Trash2 size={15} />
             </button>
           )}
         </div>
+      </div>
+    </article>
+  )
+}
+
+function DetailPage({ item, goTo }) {
+  if (!item) {
+    return (
+      <div data-reveal className="detail-panel">
+        <span>Introuvable</span>
+        <h2>Ce contenu n'est plus disponible.</h2>
+        <button className="ghost-action" onClick={() => goTo('home')}>Retour accueil</button>
+      </div>
+    )
+  }
+
+  const backPage = item.type === 'prompt' ? 'prompts' : 'blog'
+
+  return (
+    <article data-reveal className="detail-layout">
+      <button className="ghost-action detail-back" onClick={() => goTo(backPage)}>
+        Retour {item.type === 'prompt' ? 'aux prompts' : 'au blog'}
+      </button>
+
+      {item.image_url && (
+        <div className="detail-cover">
+          <img src={item.image_url} alt="" />
+        </div>
+      )}
+
+      <div className="detail-panel">
+        <span>{item.category}</span>
+        <h1>{item.title}</h1>
+        <p className="detail-description">{item.description}</p>
+        {item.body && (
+          <div className={item.type === 'prompt' ? 'prompt-box' : 'article-body'}>
+            {item.body}
+          </div>
+        )}
+        <div className="tags">
+          {(item.tags || []).map((tag) => <small key={tag}>{tag}</small>)}
+        </div>
+        {item.url && (
+          <a className="primary-action detail-link" href={item.url} target="_blank" rel="noreferrer">
+            Ouvrir la ressource <ArrowUpRight size={16} />
+          </a>
+        )}
       </div>
     </article>
   )

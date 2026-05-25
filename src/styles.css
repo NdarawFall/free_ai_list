@@ -314,6 +314,10 @@
     @apply overflow-hidden transition duration-300 hover:-translate-y-1 hover:border-cyan-300/35 hover:bg-white/[0.09];
   }
 
+  .clickable-card {
+    @apply cursor-pointer outline-none focus-visible:border-cyan-300/60 focus-visible:ring-2 focus-visible:ring-cyan-300/30;
+  }
+
   .media-frame {
     @apply relative aspect-[16/10] overflow-hidden bg-slate-900;
   }
@@ -362,14 +366,61 @@
     @apply mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4;
   }
 
+  .card-action-label,
   .card-footer a,
   .card-footer button,
   .admin-row button {
     @apply inline-flex h-9 items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 text-sm font-bold text-white/70 transition hover:border-cyan-300/40 hover:text-white disabled:opacity-50;
   }
 
-  .card-footer span {
+  .card-footer > span:not(.card-action-label) {
     @apply text-sm font-semibold text-white/40;
+  }
+
+  .detail-layout {
+    @apply mx-auto max-w-5xl space-y-5;
+  }
+
+  .detail-back {
+    @apply w-fit;
+  }
+
+  .detail-cover {
+    @apply aspect-[16/7] overflow-hidden rounded-[1.75rem] border border-white/10 bg-black/30 shadow-2xl;
+  }
+
+  .detail-cover img {
+    @apply h-full w-full object-cover;
+  }
+
+  .detail-panel {
+    @apply rounded-[1.75rem] border border-white/10 bg-white/[0.065] p-6 shadow-2xl backdrop-blur-2xl sm:p-8;
+  }
+
+  .detail-panel span {
+    @apply text-xs font-bold uppercase tracking-[0.2em] text-cyan-200;
+  }
+
+  .detail-panel h1,
+  .detail-panel h2 {
+    @apply mt-3 max-w-4xl text-3xl font-semibold tracking-[-0.03em] text-white sm:text-5xl;
+  }
+
+  .detail-description {
+    @apply mt-5 max-w-3xl text-base leading-7 text-slate-300;
+  }
+
+  .article-body,
+  .prompt-box {
+    @apply mt-6 whitespace-pre-wrap rounded-2xl border border-white/10 bg-black/25 p-5 text-sm leading-7 text-slate-200;
+  }
+
+  .prompt-box {
+    @apply border-emerald-300/20 bg-emerald-300/[0.07] font-medium text-emerald-50;
+  }
+
+  .detail-link {
+    @apply mt-6;
   }
 
   .dashboard-layout {
