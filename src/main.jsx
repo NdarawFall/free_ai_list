@@ -162,17 +162,25 @@ function App() {
         stagger: 0.07,
         ease: 'power3.out',
       })
-      gsap.to('[data-glow]', {
-        xPercent: 8,
-        yPercent: -4,
-        scale: 1.08,
-        duration: 6,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      })
     }, heroRef)
-    return () => ctx.revert()
+
+    const glowTargets = gsap.utils.toArray('[data-glow]')
+    const glowTween = glowTargets.length
+      ? gsap.to(glowTargets, {
+          xPercent: 8,
+          yPercent: -4,
+          scale: 1.08,
+          duration: 6,
+          repeat: -1,
+          yoyo: true,
+          ease: 'sine.inOut',
+        })
+      : null
+
+    return () => {
+      glowTween?.kill()
+      ctx.revert()
+    }
   }, [])
 
   useEffect(() => {
