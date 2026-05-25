@@ -354,7 +354,9 @@ function App() {
     setToast({ id: Date.now(), type, message })
   }
 
-  const currentPage = activePage === 'dashboard' && isAdmin ? 'dashboard' : activePage
+  const currentPage = activePage === 'dashboard'
+    ? (isAdmin ? 'dashboard' : 'ai')
+    : activePage
 
   return (
     <main className="site-shell">
@@ -533,7 +535,7 @@ function Metric({ label, value }) {
 }
 
 function ContentPage({ activePage, category, items, loading, onCategoryChange, onDelete, onQueryChange, query, isAdmin }) {
-  const config = {
+  const pageConfig = {
     ai: {
       label: 'IA',
       title: 'IA gratuites classées par usage.',
@@ -549,7 +551,9 @@ function ContentPage({ activePage, category, items, loading, onCategoryChange, o
       title: 'Notes courtes et guides utiles.',
       copy: 'Un espace éditorial pour documenter tes méthodes, stacks gratuites et découvertes.',
     },
-  }[activePage]
+  }
+
+  const config = pageConfig[activePage] || pageConfig.ai
 
   return (
     <>
